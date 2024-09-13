@@ -16,7 +16,7 @@ A gene by gene matrix of transformed correlations
 }
 \description{
 Take an input correlation matrix and transform it to prepare for aggregation.
-Transformation entails either all ranking, column ranking, or Fisher's Z.
+Transformation entails all ranking, column ranking, or Fisher's Z.
 Each methods impute NA cors to 0 and ensure that the diagonal equals 1.
 }
 \details{
