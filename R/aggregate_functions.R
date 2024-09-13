@@ -89,3 +89,75 @@ calc_sparse_correlation <- function(mat, cor_method) {
 
   return(cmat)
 }
+
+
+
+#' Set NAs in matrix to 0
+#'
+#' @param mat A matrix
+#'
+#' @return A matrix of the same dimensions where all values are preserved save
+#' for NAs assigned to 0
+#' @export
+#'
+#' @examples
+na_to_zero <- function(mat) {
+
+  stopifnot(is.matrix(mat))
+  mat[is.na(mat)] <- 0
+  return(mat)
+}
+
+
+
+#' Set diag of a square matrix to 1
+#'
+#' @param mat A matrix
+#'
+#' @return A matrix of the same dimensions where all values are preserved save
+#' for the diagonals assigned to 1
+#' @export
+#'
+#' @examples
+diag_to_one <- function(mat) {
+
+  stopifnot(is.matrix(mat), ncol(mat) == nrow(mat))
+  diag(mat) <- 1
+  return(mat)
+}
+
+
+
+#' Set upper triangle of a square matrix to NA
+#'
+#' @param mat A matrix
+#'
+#' @return A matrix of the same dimensions where all values are preserved save
+#' for the values above the diagonal set to NA. Diagonal is preserved.
+#' @export
+#'
+#' @examples
+uppertri_to_na <- function(mat) {
+
+  stopifnot(is.matrix(mat), ncol(mat) == nrow(mat))
+  mat[upper.tri(mat)] <- NA
+  return(mat)
+}
+
+
+
+#' Replace the upper triangle of square matrix with its lower triangle.
+#'
+#' @param mat A matrix
+#'
+#' @return A matrix of the same dimensions where all upper triangular values are
+#' replaced by its lower triangle values.
+#' @export
+#'
+#' @examples
+lowertri_to_symm <- function(mat) {
+
+  stopifnot(is.matrix(mat), ncol(mat) == nrow(mat))
+  mat[upper.tri(mat)] <-  t(mat)[upper.tri(mat)]
+  return(mat)
+}
