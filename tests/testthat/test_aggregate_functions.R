@@ -1,3 +1,10 @@
+# TODO: more explicit check of NA content in sparse_pcor()
+
+
+# colrank_mat(): focus on default ties/NA arguments
+# ------------------------------------------------------------------------------
+
+
 # Test for basic functionality
 test_that("colrank_mat ranks columns correctly", {
 
@@ -34,6 +41,10 @@ test_that("colrank_mat assigns ties to minimum values", {
 
 
 
+# allrank_mat(): focus on default ties/arg arguments
+# ------------------------------------------------------------------------------
+
+
 # Test for basic functionality
 test_that("allrank_mat ranks columns correctly", {
 
@@ -67,3 +78,40 @@ test_that("allrank_mat assigns ties to minimum values", {
 
   expect_equal(result, expected_output)
 })
+
+
+
+# sparse_pcor()
+# ------------------------------------------------------------------------------
+
+
+test_that("sparse_pcor works correctly with valid input", {
+
+  set.seed(1)
+
+  mat_sparse <- Matrix::rsparsematrix(10, 10, density = 0.5)
+  mat_sparse[, 1] <- 0
+  colnames(mat_sparse) <- paste0("gene", 1:10)
+
+  mat_dense <- as.matrix(mat_sparse)
+
+  result_sparse <- sparse_pcor(mat_sparse)
+
+  result_dense <-
+    suppressWarnings(cor(mat_dense, method = "pearson", use = "pairwise.complete.obs"))
+
+  expect_equal(result_sparse, result_dense, tolerance = 1e-6)
+
+})
+
+
+
+
+test_that("sparse_pcor throws an error with invalid input", {
+
+  mat_dense <- matrix(c(1, 0, 3, 0, 5, 6, 0, 8, 9), nrow = 3)
+
+  expect_error(sparse_pcor(mat_dense))
+
+})
+

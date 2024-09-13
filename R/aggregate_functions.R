@@ -38,3 +38,29 @@ allrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
   rownames(rank_mat) <- colnames(rank_mat) <- rownames(mat)
   return(rank_mat)
 }
+
+
+
+
+# TODO: consider trying to force to sparse?
+# Wraps to qlcMatrix::sparseCor() to make resulting matrix inherit input names
+
+#' Column-wise Pearson's correlation for sparse matrices
+#'
+#' @importFrom qlcMatrix corSparse
+#' @import Matrix
+#' @param mat A sparse numeric m by n Matrix
+#' @return A dense n by n matrix of the Pearson's correlation between the
+#' columns of mat
+#' @export
+#'
+#' @examples
+sparse_pcor <- function(mat) {
+
+  stopifnot(inherits(mat, "dgCMatrix"))
+
+  cmat <- qlcMatrix::corSparse(mat)
+  colnames(cmat) <- rownames(cmat) <- colnames(mat)
+
+  return(cmat)
+}
