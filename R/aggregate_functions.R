@@ -42,6 +42,25 @@ allrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 }
 
 
+#' Fisher Z transformation
+#'
+#' @param cor A numeric correlation value (single element, array, matrix)
+#'
+#' @return The transformed correlations
+#' @seealso DescTools::FisherZ()
+#' @export
+#'
+#' @examples
+fisherz <- function(cor) {
+
+  stopifnot(is.numeric(cor), all(cor >= -1 & cor <= 1))
+
+  fz <- 0.5 * log((1 + cor) / (1 - cor))
+  return(fz)
+}
+
+
+
 
 # Wraps to qlcMatrix::sparseCor() to make resulting matrix inherit input names
 
@@ -311,7 +330,7 @@ transform_correlation_mat <- function(cmat, agg_method) {
 
   } else if (agg_method == "FZ") {
 
-    cmat <- DescTools::FisherZ(cmat)
+    cmat <- fisherz(cmat)
   }
 
   return(cmat)
