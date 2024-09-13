@@ -11,7 +11,7 @@ uppertri_to_na(mat)
 }
 \value{
 A matrix of the same dimensions where all values are preserved save
-for the values above the diagonal set to NA. Diagonal is preserved.
+for the values above the diagonal set to NA and the diagonal is preserved
 }
 \description{
 Set upper triangle of a square matrix to NA

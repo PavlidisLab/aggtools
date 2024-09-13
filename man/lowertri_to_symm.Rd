@@ -2,7 +2,7 @@
 % Please edit documentation in R/aggregate_functions.R
 \name{lowertri_to_symm}
 \alias{lowertri_to_symm}
-\title{Replace the upper triangle of square matrix with its lower triangle.}
+\title{Replace the upper triangle of square matrix with its lower triangle}
 \usage{
 lowertri_to_symm(mat)
 }
@@ -11,8 +11,8 @@ lowertri_to_symm(mat)
 }
 \value{
 A matrix of the same dimensions where all upper triangular values are
-replaced by its lower triangle values.
+replaced by its lower triangle values
 }
 \description{
-Replace the upper triangle of square matrix with its lower triangle.
+Replace the upper triangle of square matrix with its lower triangle
 }

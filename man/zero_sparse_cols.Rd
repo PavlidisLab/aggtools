@@ -2,17 +2,20 @@
 % Please edit documentation in R/aggregate_functions.R
 \name{zero_sparse_cols}
 \alias{zero_sparse_cols}
-\title{Set sparse columns to 0.}
+\title{Set sparse columns to 0}
 \usage{
 zero_sparse_cols(mat, min_count = 20)
 }
 \arguments{
 \item{mat}{A sparse matrix}
 
-\item{min_count}{A non-negative integer. 20 is the assumed default.}
+\item{min_count}{A non-negative integer - 20 is the assumed default}
+}
+\value{
+A matrix of the same dimensions where all sparse columns are set to 0
 }
 \description{
-Set sparse columns to 0.
+Set sparse columns to 0
 }
 \section{If a col of mat has fewer non-zero elements than min_count, set that col to}{
 \enumerate{
