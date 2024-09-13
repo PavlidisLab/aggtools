@@ -112,6 +112,29 @@ test_that("allrank_mat assigns ties to minimum values", {
 
 
 
+# fisherz()
+# ------------------------------------------------------------------------------
+
+
+test_that("fisherz works as expected", {
+
+  mat <- matrix(c(1, 0.54, 0.54, 1), 2, 2)
+  result <- fisherz(mat)
+  # expected <- DescTools::FisherZ(mat)
+  expected <- matrix(c(Inf, 0.6041556, 0.6041556, Inf), 2, 2)
+
+  expect_equal(result, expected, tolerance = 1e-6)
+  expect_equal(fisherz(0), 0)
+  expect_equal(fisherz(1), Inf)
+
+  expect_error(fisherz(-1.01))
+  expect_error(fisherz(1.01))
+  expect_error(fisherz(NA))
+
+})
+
+
+
 # sparse_pcor()
 # ------------------------------------------------------------------------------
 
