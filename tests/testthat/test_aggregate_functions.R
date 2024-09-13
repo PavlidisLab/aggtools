@@ -369,3 +369,44 @@ test_that("prepare_celltype_mat checks all cell IDs are in matrix", {
                                     cell_type = "Type1"))
 
 })
+
+
+
+# init_agg_mat()
+# ------------------------------------------------------------------------------
+
+
+# Initiate a matrix of 0s for holding aggregate correlations
+test_that("init_agg_mat works correctly", {
+
+  pc_df <- data.frame(Symbol = c("Gene1", "Gene2", "Gene3"))
+  pc_df_dupl <- data.frame(Symbol = c("Gene1", "Gene2", "Gene3", "Gene3"))
+
+  result <- init_agg_mat(pc_df)
+  expected <- matrix(0, 3, 3)
+  rownames(expected) <- colnames(expected) <- c("Gene1", "Gene2", "Gene3")
+
+  expect_equal(result, expected)
+
+  # Error if pc_df has non-unique entries
+  expect_error(init_agg_mat(pc_df_dupl))
+
+})
+
+
+
+# increment_na_mat()
+# ------------------------------------------------------------------------------
+
+
+# Count the NAs in cmat and increment the corresponding indices of na_mat
+test_that("increment_na_mat works correctly", {
+
+  cmat <- matrix(c(NA, 0.2, 0.3, NA), 2, 2)
+  na_mat <- matrix(0, 2, 2)
+  result <- increment_na_mat(cmat, na_mat)
+  expected <- matrix(c(1, 0, 0, 1), 2, 2)
+
+  expect_equal(result, expected)
+
+})

@@ -215,7 +215,6 @@ prepare_celltype_mat <- function(mat, meta, cell_type, min_count = 20) {
             cell_type %in% meta[["Cell_type"]])
 
   ids <- meta[meta$Cell_type %in% cell_type, "ID"]
-  # ids <- dplyr::filter(meta, Cell_type %in% cell_type)[["ID"]]
   stopifnot(all(ids %in% colnames(mat)))
 
   ct_mat <- t(mat[, ids])
@@ -223,4 +222,48 @@ prepare_celltype_mat <- function(mat, meta, cell_type, min_count = 20) {
   stopifnot(all(rownames(ct_mat) %in% meta[["ID"]]))
 
   return(ct_mat)
+}
+
+
+
+#' Initiate aggregate matrix
+#'
+#' Initates a gene by gene matrix of 0s for holding aggregate correlations.
+#' pc_df assumed to be protein coding table with "Symbol" as a column and unique
+#' genes within Symbol.
+#'
+#' @param pc_df A data frame of unique protein coding gene symbols
+#'
+#' @return A gene by gene matrix of 0s with dimensions equal to the count of
+#' symbols in pc_df
+#' @export
+#'
+#' @examples
+init_agg_mat <- function(pc_df) {
+
+  stopifnot("Symbol" %in% colnames(pc_df),
+            length(unique(pc_df[["Symbol"]])) == length(pc_df[["Symbol"]]))
+
+  amat <- matrix(0, nrow = nrow(pc_df), ncol = nrow(pc_df))
+  rownames(amat) <- colnames(amat) <- pc_df[["Symbol"]]
+  return(amat)
+}
+
+
+
+#' Count the NAs in cmat and increment the corresponding indices of na_mat
+#'
+#' @param cmat A gene by gene correlation matrix
+#' @param na_mat A gene by gene matrix that tracks NA presence across multiple
+#' correlation matrices
+#'
+#' @return na_mat with the indices corresponding to NAs in cmat increased by 1
+#' @export
+#'
+#' @examples
+increment_na_mat <- function(cmat, na_mat) {
+
+  na_ix <- which(is.na(cmat), arr.ind = TRUE)
+  na_mat[na_ix] <- na_mat[na_ix] + 1
+  return(na_mat)
 }
