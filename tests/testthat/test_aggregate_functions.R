@@ -1,6 +1,37 @@
 # TODO: more explicit check of NA content in sparse_cor()
 
 
+# Helper to create mock data
+# ------------------------------------------------------------------------------
+
+
+
+generate_test_data <- function() {
+
+  set.seed(123)
+
+  # 100 cells split 2 cell types, 100 genes, gene 1 mostly 0s
+
+  mat_dense <- matrix(sample(1:100, 10000, replace = TRUE), nrow = 100)
+  mat_dense[1, 1:95] <- 0
+  rownames(mat_dense) <- paste0("Gene", 1:100)
+  colnames(mat_dense) <- paste0("Cell", 1:100)
+  mat_sparse <- Matrix(mat_dense, sparse = TRUE)
+
+
+  meta <- data.frame(
+    ID = paste0("Cell", 1:100),
+    Cell_type = rep(c("Type1", "Type2"), each = 50),
+    stringsAsFactors = FALSE
+  )
+
+  return(list(mat_dense = mat_dense, mat_sparse = mat_sparse, meta = meta))
+
+}
+
+
+
+
 # colrank_mat(): focus on default ties/NA arguments
 # ------------------------------------------------------------------------------
 
@@ -182,5 +213,107 @@ test_that("zero_sparse_cols checks arguments", {
   expect_error(zero_sparse_cols(mat_dense, min_count = 1))
   expect_error(zero_sparse_cols(mat_sparse, min_count = -1))
   expect_error(zero_sparse_cols(mat_sparse, min_count = 10))
+
+})
+
+
+
+# prepare_celltype_mat()
+# ------------------------------------------------------------------------------
+
+
+test_that("prepare_celltype_mat works with sparse matrix and default settings", {
+
+  test_data <- generate_test_data()
+
+  result <- prepare_celltype_mat(mat = test_data$mat_sparse,
+                                 meta = test_data$meta,
+                                 cell_type = "Type1")
+
+  expect_true(all(result[, 1] == 0))
+  expect_equal(nrow(result), 50)
+  expect_equal(ncol(result), 100)
+  expect_true(all(rownames(result) %in% test_data$meta$ID))
+
+})
+
+
+
+test_that("prepare_celltype_mat handles case where no genes meet the min_count", {
+
+  test_data <- generate_test_data()
+
+  mat_dense <- test_data$mat_dense
+  mat_dense[2:100, ] <- mat_dense[1, ]
+  mat_sparse <- Matrix(mat_dense, sparse = TRUE)
+
+  result_sparse <- prepare_celltype_mat(mat = mat_sparse,
+                                        meta = test_data$meta,
+                                        cell_type = "Type1")
+
+  expect_true(all(result_sparse == 0))
+
+})
+
+
+
+test_that("prepare_celltype_mat handles invalid cell_type", {
+
+  test_data <- generate_test_data()
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+                                    meta = test_data$meta,
+                                    cell_type = "InvalidType"))
+
+})
+
+
+
+test_that("prepare_celltype_mat handles incorrect metadata format", {
+
+  test_data <- generate_test_data()
+  invalid_meta <- data.frame(ID = paste0("Cell", 1:10), stringsAsFactors = FALSE)
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+                                    meta = invalid_meta,
+                                    cell_type = "Type1"))
+
+})
+
+
+
+test_that("prepare_celltype_mat handles arguments", {
+
+  test_data <- generate_test_data()
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_dense,
+                                    test_data$meta,
+                                    cell_type = "Type1"))
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+                                    test_data$meta,
+                                    cell_type = "Type1",
+                                    min_count = -1))
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+                                    test_data$meta,
+                                    cell_type = "Type1",
+                                    min_count = nrow(mat_dense) + 1))
+})
+
+
+
+test_that("prepare_celltype_mat checks all cell IDs are in matrix", {
+
+  test_data <- generate_test_data()
+
+  add_mock <- data.frame(ID = paste0("Cell", 101:110),
+                         Cell_type = rep("Type1", 10))
+
+  meta <- rbind(test_data$meta, add_mock)
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+                                    meta = meta,
+                                    cell_type = "Type1"))
 
 })
