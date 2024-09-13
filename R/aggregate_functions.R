@@ -273,7 +273,7 @@ increment_na_mat <- function(cmat, na_mat) {
 #' Transform correlation matrix
 #'
 #' Take an input correlation matrix and transform it to prepare for aggregation.
-#' Transformation entails either all ranking, column ranking, or Fisher's Z.
+#' Transformation entails all ranking, column ranking, or Fisher's Z.
 #' Each methods impute NA cors to 0 and ensure that the diagonal equals 1.
 #'
 #' allrank: make the matrix tri. to prevent double ranking symmetric elements
@@ -315,4 +315,57 @@ transform_correlation_mat <- function(cmat, agg_method) {
   }
 
   return(cmat)
+}
+
+
+
+#' Finalize aggregate matrix
+#'
+#' Format the final summed aggregate correlations depending on the aggregate
+#' strategy.
+#'
+#' all_rank: jointly re-rank the summed ranks and standardize into [0, 1], then
+#' convert back to a symmetric matrix for ease of downstream operations
+#'
+#' col_rank: re-rank the summed ranks for each column separately and standardize
+#' into [0, 1]
+#'
+#' FZ: divide each element by its count of its measured (i.e., non-NA)
+#' observations
+#'
+#' @param amat A gene by gene matrix tracking the aggregate correlations
+#' @param agg_method One of "allrank", "colrank", or "FZ"
+#' @param n_celltypes The count of cell types that went into the aggregated
+#' correlation
+#' @param na_mat A gene by gene matrix tracking the count of NAs across the
+#' correlation matrices
+#'
+#' @return A gene by gene matrix of the formatted aggregated correlations
+#' @export
+#'
+#' @examples
+finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
+
+  stopifnot(agg_method %in% c("allrank", "colrank", "FZ"))
+  stopifnot(is.matrix(amat), identical(rownames(amat), colnames(amat)))
+
+  if (agg_method == "allrank") {
+
+    amat <- allrank_mat(amat) / sum(!is.na(amat))
+    amat <- diag_to_one(amat)
+    amat <- lowertri_to_symm(amat)
+
+  } else if (agg_method == "colrank") {
+
+    amat <- colrank_mat(amat)
+    ngene <- nrow(amat)
+    amat <- apply(amat, 2, function(x) x/ngene)
+
+  } else if (agg_method == "FZ") {
+
+    amat <- amat / (n_celltypes - na_mat)
+
+  }
+
+  return(amat)
 }

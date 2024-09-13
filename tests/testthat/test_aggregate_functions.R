@@ -500,3 +500,48 @@ test_that("transform_correlation_mat handles NA values correctly", {
 })
 
 
+
+# finalize_agg_mat()
+# ------------------------------------------------------------------------------
+
+
+test_that("finalize_agg_mat works correctly with allrank", {
+
+  mat <- matrix(c(2, 6, NA, 2), 2, 2)
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
+  na_mat <- matrix(0, 2, 2)
+  result <- finalize_agg_mat(mat, agg_method = "allrank", 2, na_mat = na_mat)
+  expected <- matrix(c(1, 0.3333333, 0.3333333, 1), 2, 2)
+  rownames(expected) <- colnames(expected) <- c("gene1", "gene2")
+
+  expect_equal(result, expected, tolerance = 1e-6)
+
+})
+
+
+
+test_that("finalize_agg_mat works correctly with colrank", {
+
+  mat <- matrix(c(2, 4, 4, 2), 2, 2)
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
+  na_mat <- matrix(0, 2, 2)
+  result <- finalize_agg_mat(mat, "colrank", 2, na_mat)
+  expected <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
+  rownames(expected) <- colnames(expected) <- c("gene1", "gene2")
+
+  expect_equal(result, expected, tolerance = 1e-6)
+})
+
+
+
+test_that("finalize_agg_mat works correctly with FZ", {
+
+  mat <- matrix(c(Inf, 1.098612, 1.098612, Inf), 2, 2)
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
+  na_mat <- matrix(0, 2, 2)
+  result <- finalize_agg_mat(mat, "FZ", 2, na_mat)
+  expected <- matrix(c(Inf, 0.5493061, 0.5493061, Inf), 2, 2)
+  rownames(expected) <- colnames(expected) <- c("gene1", "gene2")
+
+  expect_equal(result, expected, tolerance = 1e-6)
+})
