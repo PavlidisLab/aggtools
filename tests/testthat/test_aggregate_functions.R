@@ -133,3 +133,54 @@ test_that("calc_sparse_correlation throws an error for invalid cor_method", {
   expect_error(calc_sparse_correlation(mat, cor_method = "invalid"))
 
 })
+
+
+
+# zero_sparse_cols()
+# ------------------------------------------------------------------------------
+
+
+test_that("zero_sparse_cols sets columns to 0 correctly for sparse matrix", {
+
+  mat <- Matrix(c(1, 0, 3, 0, 5, 0, 7, 0, 0, 0), nrow = 5, ncol = 2, sparse = TRUE)
+  result <- zero_sparse_cols(mat, min_count = 2)
+
+  expect_true(all(result[, 2] == 0))
+  expect_equal(mat[, 1], result[, 1])
+
+})
+
+
+
+test_that("zero_sparse_cols handles edge cases for sparse matrix", {
+
+  mat <- Matrix(c(1, 2, 3, 4, 5, 1, 2, 3, 4, 0), nrow = 5, ncol = 2, sparse = TRUE)
+  result <- zero_sparse_cols(mat, min_count = 5)
+
+  expect_true(all(result[, 2] == 0))
+  expect_error(zero_sparse_cols(mat, min_count = 6))
+
+})
+
+
+
+test_that("zero_sparse_cols handles minimum count of 0 for sparse matrix", {
+
+  mat <- Matrix(c(1, 2, 3, 4, 5), nrow = 5, ncol = 1, sparse = TRUE)
+  result <- zero_sparse_cols(mat, min_count = 0)
+  expect_false(any(result[, 1] == 0))
+
+})
+
+
+
+test_that("zero_sparse_cols checks arguments", {
+
+  mat_dense <- matrix(c(1, 2, 3, 4, 5), nrow = 5, ncol = 1)
+  mat_sparse <- Matrix(c(1, 2, 3, 4, 5), nrow = 5, ncol = 1, sparse = TRUE)
+
+  expect_error(zero_sparse_cols(mat_dense, min_count = 1))
+  expect_error(zero_sparse_cols(mat_sparse, min_count = -1))
+  expect_error(zero_sparse_cols(mat_sparse, min_count = 10))
+
+})

@@ -161,3 +161,33 @@ lowertri_to_symm <- function(mat) {
   mat[upper.tri(mat)] <-  t(mat)[upper.tri(mat)]
   return(mat)
 }
+
+
+
+#' Set sparse columns to 0.
+#'
+#'# If a col of mat has fewer non-zero elements than min_count, set that col to
+#'0. This is done to produce an NA during correlation, instead of allowing cors
+#' derived from overly sparse columns.
+#' n=20 default used from https://doi.org/10.1093/bioinformatics/btv118
+#'
+#' @import Matrix
+#' @param mat A sparse matrix
+#' @param min_count A non-negative integer. 20 is the assumed default.
+#'
+#' @return
+#' @export
+#'
+#' @examples
+zero_sparse_cols <- function(mat, min_count = 20) {
+
+  stopifnot(inherits(mat, "dgCMatrix"),
+            is.numeric(min_count),
+            min_count >= 0 & min_count <= nrow(mat))
+
+  nonzero_cells <- colSums(mat != 0)
+  filt_genes <- nonzero_cells < min_count
+  if (any(filt_genes)) mat[, filt_genes] <- 0
+
+  return(mat)
+}
