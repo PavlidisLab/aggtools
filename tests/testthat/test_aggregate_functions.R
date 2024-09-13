@@ -167,6 +167,58 @@ test_that("calc_sparse_correlation throws an error for invalid cor_method", {
 
 
 
+# Matrix helpers
+# ------------------------------------------------------------------------------
+
+
+test_that("na_to_zero works correctly", {
+
+  mat <- matrix(c(1, NA, 3, 4), 2, 2)
+  result <- na_to_zero(mat)
+  expected <- matrix(c(1, 0, 3, 4), 2, 2)
+
+  expect_equal(result, expected)
+
+})
+
+
+
+test_that("diag_to_one works correctly", {
+
+  mat <- matrix(c(1, 2, 3, 4), 2, 2)
+  result <- diag_to_one(mat)
+  expected <- matrix(c(1, 2, 3, 1), 2, 2)
+
+  expect_equal(result, expected)
+
+})
+
+
+
+test_that("uppertri_to_na works correctly", {
+
+  mat <- matrix(c(1, 2, 3, 4), 2, 2)
+  result <- uppertri_to_na(mat)
+  expected <- matrix(c(1, 2, NA, 4), 2, 2)
+
+  expect_equal(result, expected)
+
+})
+
+
+
+test_that("lowertri_to_symm works correctly", {
+
+  mat <- matrix(c(1, 2, 3, 4), 2, 2)
+  result <- lowertri_to_symm(mat)
+  expected <- matrix(c(1, 2, 2, 4), 2, 2)
+
+  expect_equal(result, expected)
+
+})
+
+
+
 # zero_sparse_cols()
 # ------------------------------------------------------------------------------
 
