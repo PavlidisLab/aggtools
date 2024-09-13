@@ -133,7 +133,7 @@ diag_to_one <- function(mat) {
 #' @param mat A matrix
 #'
 #' @return A matrix of the same dimensions where all values are preserved save
-#' for the values above the diagonal set to NA. Diagonal is preserved.
+#' for the values above the diagonal set to NA and the diagonal is preserved
 #' @export
 #'
 #' @examples
@@ -146,12 +146,12 @@ uppertri_to_na <- function(mat) {
 
 
 
-#' Replace the upper triangle of square matrix with its lower triangle.
+#' Replace the upper triangle of square matrix with its lower triangle
 #'
 #' @param mat A matrix
 #'
 #' @return A matrix of the same dimensions where all upper triangular values are
-#' replaced by its lower triangle values.
+#' replaced by its lower triangle values
 #' @export
 #'
 #' @examples
@@ -164,7 +164,7 @@ lowertri_to_symm <- function(mat) {
 
 
 
-#' Set sparse columns to 0.
+#' Set sparse columns to 0
 #'
 #'# If a col of mat has fewer non-zero elements than min_count, set that col to
 #'0. This is done to produce an NA during correlation, instead of allowing cors
@@ -173,9 +173,9 @@ lowertri_to_symm <- function(mat) {
 #'
 #' @import Matrix
 #' @param mat A sparse matrix
-#' @param min_count A non-negative integer. 20 is the assumed default.
+#' @param min_count A non-negative integer - 20 is the assumed default
 #'
-#' @return
+#' @return A matrix of the same dimensions where all sparse columns are set to 0
 #' @export
 #'
 #' @examples
@@ -190,4 +190,37 @@ zero_sparse_cols <- function(mat, min_count = 20) {
   if (any(filt_genes)) mat[, filt_genes] <- 0
 
   return(mat)
+}
+
+
+
+#' Prepare a cell type matrix for coexpression
+#'
+#' Subset mat to cells annotated to the input cell_type, set sparse genes to 0
+#' and transpose the resulting matrix.
+
+#' @param mat A sparse gene by cell matrix
+#' @param meta A data frame that maps cell IDs to cell types
+#' @param cell_type A character of the cell type to subset mat on
+#' @param min_count A non-negative integer - 20 is the assumed default
+#'
+#' @return A sparse cell by gene matrix
+#' @export
+#'
+#' @examples
+prepare_celltype_mat <- function(mat, meta, cell_type, min_count = 20) {
+
+  stopifnot(inherits(mat, "dgCMatrix"),
+            c("ID", "Cell_type") %in% colnames(meta),
+            cell_type %in% meta[["Cell_type"]])
+
+  ids <- meta[meta$Cell_type %in% cell_type, "ID"]
+  # ids <- dplyr::filter(meta, Cell_type %in% cell_type)[["ID"]]
+  stopifnot(all(ids %in% colnames(mat)))
+
+  ct_mat <- t(mat[, ids])
+  ct_mat <- zero_sparse_cols(ct_mat, min_count)
+  stopifnot(all(rownames(ct_mat) %in% meta[["ID"]]))
+
+  return(ct_mat)
 }
