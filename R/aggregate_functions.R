@@ -267,3 +267,52 @@ increment_na_mat <- function(cmat, na_mat) {
   na_mat[na_ix] <- na_mat[na_ix] + 1
   return(na_mat)
 }
+
+
+
+#' Transform correlation matrix
+#'
+#' Take an input correlation matrix and transform it to prepare for aggregation.
+#' Transformation entails either all ranking, column ranking, or Fisher's Z.
+#' Each methods impute NA cors to 0 and ensure that the diagonal equals 1.
+#'
+#' allrank: make the matrix tri. to prevent double ranking symmetric elements
+#' and then jointly rank the matrix (lower rank = positive cor).
+#'
+#' colrank: rank each column separately (lower rank = positive cor).
+#'
+#' FZ: perform Fisher's Z transform on the raw correlations
+
+#' @param cmat A gene by gene correlation matrix
+#' @param agg_method One of "allrank", "colrank", or "FZ"
+#'
+#' @return A gene by gene matrix of transformed correlations
+#' @export
+#'
+#' @examples
+transform_correlation_mat <- function(cmat, agg_method) {
+
+  stopifnot(agg_method %in% c("allrank", "colrank", "FZ"))
+  stopifnot(is.matrix(cmat), identical(rownames(cmat), colnames(cmat)))
+
+  cmat <- cmat %>%
+    na_to_zero() %>%
+    diag_to_one()
+
+  if (agg_method == "allrank") {
+
+    cmat <- cmat %>%
+      uppertri_to_na() %>%
+      allrank_mat()
+
+  } else if (agg_method == "colrank") {
+
+    cmat <- colrank_mat(cmat)
+
+  } else if (agg_method == "FZ") {
+
+    cmat <- DescTools::FisherZ(cmat)
+  }
+
+  return(cmat)
+}
