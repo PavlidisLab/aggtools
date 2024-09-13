@@ -1,4 +1,4 @@
-# TODO: more explicit check of NA content in sparse_pcor()
+# TODO: more explicit check of NA content in sparse_cor()
 
 
 # colrank_mat(): focus on default ties/NA arguments
@@ -102,6 +102,11 @@ test_that("sparse_pcor works correctly with valid input", {
 
   expect_equal(result_sparse, result_dense, tolerance = 1e-6)
 
+  # All 0 calls should result in NA cors, including self, and not 1
+  expect_true(any(is.na(result_sparse)))
+  expect_true(is.na(result_sparse[1, 1]))
+
+
 })
 
 
@@ -115,3 +120,16 @@ test_that("sparse_pcor throws an error with invalid input", {
 
 })
 
+
+
+# calc_sparse_correlation()
+# ------------------------------------------------------------------------------
+
+
+test_that("calc_sparse_correlation throws an error for invalid cor_method", {
+
+  mat <- matrix(rnorm(100), nrow = 10, ncol = 10)
+
+  expect_error(calc_sparse_correlation(mat, cor_method = "invalid"))
+
+})

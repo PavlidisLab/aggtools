@@ -1,3 +1,6 @@
+# TODO: consider trying to force to sparse in cor call?
+
+
 #' Rank the columns of a matrix such that rank=1 is the highest positive value
 #'
 #' @param mat A numeric matrix
@@ -15,7 +18,6 @@ colrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
   rank_mat <- apply(-mat, 2, rank, ties.method = ties_arg, na.last = na_arg)
   return(rank_mat)
 }
-
 
 
 
@@ -41,8 +43,6 @@ allrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 
 
 
-
-# TODO: consider trying to force to sparse?
 # Wraps to qlcMatrix::sparseCor() to make resulting matrix inherit input names
 
 #' Column-wise Pearson's correlation for sparse matrices
@@ -61,6 +61,31 @@ sparse_pcor <- function(mat) {
 
   cmat <- qlcMatrix::corSparse(mat)
   colnames(cmat) <- rownames(cmat) <- colnames(mat)
+
+  return(cmat)
+}
+
+
+
+#' Wrapper for calling sparse Pearson or Spearman correlation
+#'
+#' @param mat A sparse numeric m by n Matrix
+#' @param cor_method One of "pearson" or "spearman"
+#'
+#' @return A dense n by n matrix of the correlations between the columns of mat
+#' @export
+#'
+#' @examples
+calc_sparse_correlation <- function(mat, cor_method) {
+
+  stopifnot(inherits(mat, "dgCMatrix"))
+  stopifnot(cor_method %in% c("pearson", "spearman"))
+
+  cmat <- if (cor_method == "pearson") {
+    sparse_pcor(mat)
+  } else {
+    sparse_scor(mat)
+  }
 
   return(cmat)
 }
