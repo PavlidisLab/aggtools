@@ -185,27 +185,28 @@ lowertri_to_symm <- function(mat) {
 
 #' Set sparse columns to 0
 #'
-#'# If a col of mat has fewer non-zero elements than min_count, set that col to
-#'0. This is done to produce an NA during correlation, instead of allowing cors
-#' derived from overly sparse columns.
+#' If a col of mat has fewer non-zero elements than min_cell, set that col to
+#' 0. This is done to produce an NA during correlation, instead of allowing cors
+#' derived from overly sparse genes/columns.
 #' n=20 default used from https://doi.org/10.1093/bioinformatics/btv118
 #'
 #' @import Matrix
 #' @param mat A sparse matrix
-#' @param min_count A non-negative integer - 20 is the assumed default
+#' @param min_cell A non-negative integer corresponding to how many cells of a
+#' cell type must have at least one count for a gene to be considered "measured"
 #'
 #' @return A matrix of the same dimensions where all sparse columns are set to 0
 #' @export
 #'
 #' @examples
-zero_sparse_cols <- function(mat, min_count = 20) {
+zero_sparse_cols <- function(mat, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
-            is.numeric(min_count),
-            min_count >= 0 & min_count <= nrow(mat))
+            is.numeric(min_cell),
+            min_cell >= 0 & min_cell <= nrow(mat))
 
   nonzero_cells <- colSums(mat != 0)
-  filt_genes <- nonzero_cells < min_count
+  filt_genes <- nonzero_cells < min_cell
   if (any(filt_genes)) mat[, filt_genes] <- 0
 
   return(mat)
@@ -221,13 +222,14 @@ zero_sparse_cols <- function(mat, min_count = 20) {
 #' @param mat A sparse gene by cell matrix
 #' @param meta A data frame that maps cell IDs to cell types
 #' @param cell_type A character of the cell type to subset mat on
-#' @param min_count A non-negative integer - 20 is the assumed default
+#' @param min_cell A non-negative integer corresponding to how many cells of a
+#' cell type must have at least one count for a gene to be considered "measured"
 #'
 #' @return A sparse cell by gene matrix
 #' @export
 #'
 #' @examples
-prepare_celltype_mat <- function(mat, meta, cell_type, min_count = 20) {
+prepare_celltype_mat <- function(mat, meta, cell_type, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
             c("ID", "Cell_type") %in% colnames(meta),
@@ -237,7 +239,7 @@ prepare_celltype_mat <- function(mat, meta, cell_type, min_count = 20) {
   stopifnot(all(ids %in% colnames(mat)))
 
   ct_mat <- t(mat[, ids])
-  ct_mat <- zero_sparse_cols(ct_mat, min_count)
+  ct_mat <- zero_sparse_cols(ct_mat, min_cell)
   stopifnot(all(rownames(ct_mat) %in% meta[["ID"]]))
 
   return(ct_mat)
@@ -387,4 +389,100 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
   }
 
   return(amat)
+}
+
+
+
+#' Aggregate cell type correlation matrices within a single dataset
+#'
+#' Iterates through each unique cell type in meta, subsetting mat to cells of
+#' the given type and generating a cell type coexpression matrix for each,
+#' which are aggregated into a single matrix.
+#'
+#' https://pubmed.ncbi.nlm.nih.gov/27165153/
+#' https://pubmed.ncbi.nlm.nih.gov/25717192/
+#' https://pubmed.ncbi.nlm.nih.gov/34015329/
+#'
+#' all_rank: each cell type coexpression matrix is ranked across the entire
+#' matrix, then summed and rank standardized into [0, 1].
+#'
+#' col_rank: each cell type coexpression matrix is ranked column-wise, then
+#' summed and rank standardized into [0, 1].
+#'
+#' FZ: Fisher's Z transformation is applied to each cell type coexpression
+#' matrix, which are then summed and divided element-wise by the count of times
+#' a given gene-gene pair was co-measured across all cell types.
+#'
+#' @param mat A sparse gene by cell matrix
+#' @param meta A data frame that maps cell IDs to cell types
+#' @param pc_df A data frame of unique protein coding gene symbols
+#' @param cor_method One of "pearson" or "spearman"
+#' @param agg_method One of "allrank", "colrank", or "FZ"
+#' @param min_cell A non-negative integer corresponding to how many cells of a
+#' cell type must have at least one count for a gene to be considered "measured"
+#' and thus viable for calculating correlation
+#'
+#' @param verbose Logical determining if the current cell type and time should
+#' be displayed as a message during iteration
+#'
+#' @return A list of two gene by gene matrices, the first of which is the
+#' aggregate coexpression matrix and the second of which is the NA tracking
+#' matrix
+#' @export
+#'
+#' @examples
+aggr_coexpr_within_dataset <- function(mat,
+                                       meta,
+                                       pc_df,
+                                       cor_method,
+                                       agg_method,
+                                       min_cell = 20,
+                                       verbose = TRUE) {
+
+  stopifnot(cor_method %in% c("pearson", "spearman"))
+  stopifnot(agg_method %in% c("allrank", "colrank", "FZ"))
+
+  cts <- unique(meta[["Cell_type"]])
+  n_cts <- length(cts)
+
+  # Matrices of 0s for tracking aggregate correlation and count of NAs
+
+  amat <- init_agg_mat(pc_df)
+  na_mat <- amat
+
+  for (ct in cts) {
+
+    if (verbose) message(paste(ct, Sys.time()))
+
+    # Get count matrix for current cell type, coercing low count genes to 0
+
+    ct_mat <- prepare_celltype_mat(mat, meta, ct, min_cell)
+
+    no_msr <- all(ct_mat == 0)
+
+    if (no_msr) {
+      message(paste(ct, "skipped due to insufficient counts"))
+      na_mat <- na_mat + 1
+      next()
+    }
+
+    # Get cell-type cor matrix and increment count of NAs before imputing to 0
+
+    cmat <- calc_sparse_correlation(ct_mat, cor_method)
+    na_mat <- increment_na_mat(cmat, na_mat)
+
+    # Transform raw correlation matrix, add to aggregate and clean up
+
+    cmat <- transform_correlation_mat(cmat, agg_method)
+    amat <- amat + cmat
+    rm(cmat, ct_mat)
+    gc(verbose = FALSE)
+
+  }
+
+  # Final format of aggregate matrix and return along with the tracked NA mat
+
+  amat <- finalize_agg_mat(amat, agg_method, n_cts, na_mat)
+  return(list(Agg_mat = amat, NA_mat = na_mat))
+
 }

@@ -4,7 +4,7 @@
 \alias{prepare_celltype_mat}
 \title{Prepare a cell type matrix for coexpression}
 \usage{
-prepare_celltype_mat(mat, meta, cell_type, min_count = 20)
+prepare_celltype_mat(mat, meta, cell_type, min_cell = 20)
 }
 \arguments{
 \item{mat}{A sparse gene by cell matrix}
@@ -13,7 +13,8 @@ prepare_celltype_mat(mat, meta, cell_type, min_count = 20)
 
 \item{cell_type}{A character of the cell type to subset mat on}
 
-\item{min_count}{A non-negative integer - 20 is the assumed default}
+\item{min_cell}{A non-negative integer corresponding to how many cells of a
+cell type must have at least one count for a gene to be considered "measured"}
 }
 \value{
 A sparse cell by gene matrix

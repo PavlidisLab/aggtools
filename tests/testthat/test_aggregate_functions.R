@@ -1,4 +1,5 @@
 # TODO: more explicit check of NA content in sparse_cor()
+# TODO: revisit aggr_coexpr_within_dataset test of insufficient counts
 
 
 # Helper to create mock data
@@ -25,7 +26,15 @@ generate_test_data <- function() {
     stringsAsFactors = FALSE
   )
 
-  return(list(mat_dense = mat_dense, mat_sparse = mat_sparse, meta = meta))
+  pc_df <- data.frame(Symbol = paste0("Gene", 1:100))
+
+
+  return(list(
+    mat_dense = mat_dense,
+    mat_sparse = mat_sparse,
+    meta = meta,
+    pc_df = pc_df
+  ))
 
 }
 
@@ -249,7 +258,7 @@ test_that("lowertri_to_symm works correctly", {
 test_that("zero_sparse_cols sets columns to 0 correctly for sparse matrix", {
 
   mat <- Matrix(c(1, 0, 3, 0, 5, 0, 7, 0, 0, 0), nrow = 5, ncol = 2, sparse = TRUE)
-  result <- zero_sparse_cols(mat, min_count = 2)
+  result <- zero_sparse_cols(mat, min_cell = 2)
 
   expect_true(all(result[, 2] == 0))
   expect_equal(mat[, 1], result[, 1])
@@ -261,10 +270,10 @@ test_that("zero_sparse_cols sets columns to 0 correctly for sparse matrix", {
 test_that("zero_sparse_cols handles edge cases for sparse matrix", {
 
   mat <- Matrix(c(1, 2, 3, 4, 5, 1, 2, 3, 4, 0), nrow = 5, ncol = 2, sparse = TRUE)
-  result <- zero_sparse_cols(mat, min_count = 5)
+  result <- zero_sparse_cols(mat, min_cell = 5)
 
   expect_true(all(result[, 2] == 0))
-  expect_error(zero_sparse_cols(mat, min_count = 6))
+  expect_error(zero_sparse_cols(mat, min_cell = 6))
 
 })
 
@@ -273,7 +282,7 @@ test_that("zero_sparse_cols handles edge cases for sparse matrix", {
 test_that("zero_sparse_cols handles minimum count of 0 for sparse matrix", {
 
   mat <- Matrix(c(1, 2, 3, 4, 5), nrow = 5, ncol = 1, sparse = TRUE)
-  result <- zero_sparse_cols(mat, min_count = 0)
+  result <- zero_sparse_cols(mat, min_cell = 0)
   expect_false(any(result[, 1] == 0))
 
 })
@@ -285,9 +294,9 @@ test_that("zero_sparse_cols checks arguments", {
   mat_dense <- matrix(c(1, 2, 3, 4, 5), nrow = 5, ncol = 1)
   mat_sparse <- Matrix(c(1, 2, 3, 4, 5), nrow = 5, ncol = 1, sparse = TRUE)
 
-  expect_error(zero_sparse_cols(mat_dense, min_count = 1))
-  expect_error(zero_sparse_cols(mat_sparse, min_count = -1))
-  expect_error(zero_sparse_cols(mat_sparse, min_count = 10))
+  expect_error(zero_sparse_cols(mat_dense, min_cell = 1))
+  expect_error(zero_sparse_cols(mat_sparse, min_cell = -1))
+  expect_error(zero_sparse_cols(mat_sparse, min_cell = 10))
 
 })
 
@@ -314,7 +323,7 @@ test_that("prepare_celltype_mat works with sparse matrix and default settings", 
 
 
 
-test_that("prepare_celltype_mat handles case where no genes meet the min_count", {
+test_that("prepare_celltype_mat handles case where no genes meet the min_cell", {
 
   test_data <- generate_test_data()
 
@@ -368,12 +377,12 @@ test_that("prepare_celltype_mat handles arguments", {
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
                                     test_data$meta,
                                     cell_type = "Type1",
-                                    min_count = -1))
+                                    min_cell = -1))
 
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
                                     test_data$meta,
                                     cell_type = "Type1",
-                                    min_count = nrow(mat_dense) + 1))
+                                    min_cell = nrow(mat_dense) + 1))
 })
 
 
@@ -568,3 +577,76 @@ test_that("finalize_agg_mat works correctly with FZ", {
 
   expect_equal(result, expected, tolerance = 1e-6)
 })
+
+
+
+# aggr_coexpr_within_dataset()
+# ------------------------------------------------------------------------------
+
+
+
+test_that("aggr_coexpr_within_dataset works for Pearson correlation", {
+
+  test_data <- generate_test_data()
+
+  result_allrank <- aggr_coexpr_within_dataset(mat = test_data$mat_sparse,
+                                               meta = test_data$meta,
+                                               pc_df = test_data$pc_df,
+                                               cor_method = "pearson",
+                                               agg_method = "allrank",
+                                               verbose = FALSE)
+
+  result_colrank <- aggr_coexpr_within_dataset(mat = test_data$mat_sparse,
+                                               meta = test_data$meta,
+                                               pc_df = test_data$pc_df,
+                                               cor_method = "pearson",
+                                               agg_method = "colrank",
+                                               verbose = FALSE)
+
+  result_fz <- aggr_coexpr_within_dataset(mat = test_data$mat_sparse,
+                                          meta = test_data$meta,
+                                          pc_df = test_data$pc_df,
+                                          cor_method = "pearson",
+                                          agg_method = "FZ",
+                                          verbose = FALSE)
+
+  expect_true(is.matrix(result_allrank$Agg_mat))
+  expect_true(is.matrix(result_colrank$Agg_mat))
+  expect_true(is.matrix(result_fz$Agg_mat))
+
+  expect_true(is.matrix(result_allrank$NA_mat))
+  expect_equal(dim(result_allrank$Agg_mat), dim(result_allrank$NA_mat))
+  expect_equal(result_allrank$NA_mat, result_colrank$NA_mat)
+  expect_equal(result_allrank$NA_mat, result_fz$NA_mat)
+
+  expect_equal(dim(result_allrank$Agg_mat),
+               c(nrow(test_data$mat_sparse), nrow(test_data$mat_sparse)))
+
+  expect_equal(dim(result_allrank$Agg_mat), dim(result_colrank$Agg_mat))
+  expect_equal(dim(result_allrank$Agg_mat), dim(result_fz$Agg_mat))
+
+  expect_equal(diag(result_allrank$Agg_mat), diag(result_colrank$Agg_mat))
+
+})
+
+
+
+
+# test_that("aggr_coexpr_within_dataset handles insufficient counts", {
+#
+#   # Set min_cell to a high number to force insufficient counts
+#   result <- aggr_coexpr_within_dataset(mat = test_data$mat_sparse,
+#                                        meta = test_data$meta,
+#                                        pc_df = test_data$pc_df,
+#                                        cor_method = "pearson",
+#                                        agg_method = "allrank",
+#                                        min_cell = 51)
+#
+#   expect_true(is.matrix(result$Agg_mat))
+#   expect_true(is.matrix(result$NA_mat))
+#
+#   expect_equal(dim(result$NA_mat), c(10, 10))
+#   expect_true(all(result$NA_mat == 1))
+#
+# })
+

@@ -4,24 +4,20 @@
 \alias{zero_sparse_cols}
 \title{Set sparse columns to 0}
 \usage{
-zero_sparse_cols(mat, min_count = 20)
+zero_sparse_cols(mat, min_cell = 20)
 }
 \arguments{
 \item{mat}{A sparse matrix}
 
-\item{min_count}{A non-negative integer - 20 is the assumed default}
+\item{min_cell}{A non-negative integer corresponding to how many cells of a
+cell type must have at least one count for a gene to be considered "measured"}
 }
 \value{
 A matrix of the same dimensions where all sparse columns are set to 0
 }
 \description{
-Set sparse columns to 0
-}
-\section{If a col of mat has fewer non-zero elements than min_count, set that col to}{
-\enumerate{
-\item This is done to produce an NA during correlation, instead of allowing cors
-derived from overly sparse columns.
+If a col of mat has fewer non-zero elements than min_cell, set that col to
+0. This is done to produce an NA during correlation, instead of allowing cors
+derived from overly sparse genes/columns.
 n=20 default used from https://doi.org/10.1093/bioinformatics/btv118
 }
-}
-
