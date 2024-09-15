@@ -686,3 +686,67 @@ test_that("load_scdat loads valid paths and checks object", {
 
 })
 
+
+
+
+# aggr_coexpr_multi_dataset()
+# ------------------------------------------------------------------------------
+
+
+
+test_that("aggr_coexpr_multi_dataset works for Pearson correlation", {
+
+  #  Generate mock data to load inside call
+  test_data <- generate_test_data()
+  test_data1 <- list(Mat = test_data$mat_sparse, Meta = test_data$meta)
+  test_data2 <- test_data1
+  temp_file1 <- tempfile(fileext = ".RDS")
+  temp_file2 <- tempfile(fileext = ".RDS")
+  saveRDS(test_data1, temp_file1)
+  saveRDS(test_data2, temp_file2)
+
+  input_df <- data.frame(ID = c("ID1", "ID2"),
+                         Path = c(temp_file1, temp_file2),
+                         Cell_type = c("Type1", "Type1"))
+
+
+  result_allrank <- aggr_coexpr_multi_dataset(input_df = input_df,
+                                              pc_df = test_data$pc_df,
+                                              cor_method = "pearson",
+                                              agg_method = "allrank",
+                                              verbose = FALSE)
+
+  result_colrank <- aggr_coexpr_multi_dataset(input_df = input_df,
+                                              pc_df = test_data$pc_df,
+                                              cor_method = "pearson",
+                                              agg_method = "colrank",
+                                              verbose = FALSE)
+
+  result_fz <- aggr_coexpr_multi_dataset(input_df = input_df,
+                                         pc_df = test_data$pc_df,
+                                         cor_method = "pearson",
+                                         agg_method = "FZ",
+                                         verbose = FALSE)
+
+  expect_true(is.matrix(result_allrank$Agg_mat))
+  expect_true(is.matrix(result_colrank$Agg_mat))
+  expect_true(is.matrix(result_fz$Agg_mat))
+
+  expect_true(is.matrix(result_allrank$NA_mat))
+  expect_equal(dim(result_allrank$Agg_mat), dim(result_allrank$NA_mat))
+  expect_equal(result_allrank$NA_mat, result_colrank$NA_mat)
+  expect_equal(result_allrank$NA_mat, result_fz$NA_mat)
+
+  expect_equal(dim(result_allrank$Agg_mat),
+               c(nrow(test_data$mat_sparse), nrow(test_data$mat_sparse)))
+
+  expect_equal(dim(result_allrank$Agg_mat), dim(result_colrank$Agg_mat))
+  expect_equal(dim(result_allrank$Agg_mat), dim(result_fz$Agg_mat))
+
+  expect_equal(diag(result_allrank$Agg_mat), diag(result_colrank$Agg_mat))
+
+
+  unlink(temp_file1)
+  unlink(temp_file2)
+
+})
