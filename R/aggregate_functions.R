@@ -562,7 +562,7 @@ aggr_coexpr_multi_dataset <- function(input_df,
             c("Path", "Cell_type" %in% colnames(input_df)))
 
   data_ids <- unique(input_df[["ID"]])
-  n_cts <- length(data_ids) # All cell types for a dataset are collapsed
+  n_dat <- length(data_ids) # All cell types for a dataset are collapsed
 
   # Matrices of 0s for tracking aggregate correlation and count of NAs
 
@@ -573,8 +573,8 @@ aggr_coexpr_multi_dataset <- function(input_df,
 
     if (verbose) message(paste(id, Sys.time()))
 
-    ct <- filter(input_df, ID == id)[["Cell_type"]]
-    dat_path <- unique(filter(input_df, ID == id)[["Path"]])
+    ct <- input_df[input_df$ID == id, "Cell_type"]
+    dat_path <- unique(input_df[input_df$ID == id, "Path"])
 
     # Load dataset and get count matrix for current cell type
 
@@ -611,6 +611,6 @@ aggr_coexpr_multi_dataset <- function(input_df,
 
   # Final format of aggregate matrix and return along with the tracked NA mat
 
-  amat <- finalize_agg_mat(amat, agg_method, n_cts, na_mat)
+  amat <- finalize_agg_mat(amat, agg_method, n_dat, na_mat)
   return(list(Agg_mat = amat, NA_mat = na_mat))
 }
