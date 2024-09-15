@@ -47,10 +47,10 @@ https://pubmed.ncbi.nlm.nih.gov/25717192/
 https://pubmed.ncbi.nlm.nih.gov/34015329/
 
 all_rank: each cell type coexpression matrix is ranked across the entire
-matrix, then summed and rank standardized into \link{0, 1}.
+matrix, then summed and rank standardized into [0, 1].
 
 col_rank: each cell type coexpression matrix is ranked column-wise, then
-summed and rank standardized into \link{0, 1}.
+summed and rank standardized into [0, 1].
 
 FZ: Fisher's Z transformation is applied to each cell type coexpression
 matrix, which are then summed and divided element-wise by the count of times

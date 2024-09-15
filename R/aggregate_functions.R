@@ -340,11 +340,11 @@ transform_correlation_mat <- function(cmat, agg_method) {
 #' Format the final summed aggregate correlations depending on the aggregate
 #' strategy.
 #'
-#' all_rank: jointly re-rank the summed ranks and standardize into [0, 1], then
+#' all_rank: jointly re-rank the summed ranks and standardize into [\0, 1\], then
 #' convert back to a symmetric matrix for ease of downstream operations
 #'
 #' col_rank: re-rank the summed ranks for each column separately and standardize
-#' into [0, 1]
+#' into \[0, 1\]
 #'
 #' FZ: divide each element by its count of its measured (i.e., non-NA)
 #' observations
