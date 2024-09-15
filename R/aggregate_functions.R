@@ -313,15 +313,13 @@ transform_correlation_mat <- function(cmat, agg_method) {
   stopifnot(agg_method %in% c("allrank", "colrank", "FZ"),
             is.matrix(cmat), identical(rownames(cmat), colnames(cmat)))
 
-  cmat <- cmat %>%
-    na_to_zero() %>%
-    diag_to_one()
+  cmat <- na_to_zero(cmat)
+  cmat <- diag_to_one(cmat)
 
   if (agg_method == "allrank") {
 
-    cmat <- cmat %>%
-      uppertri_to_na() %>%
-      allrank_mat()
+    cmat <- uppertri_to_na(cmat)
+    cmat <- allrank_mat(cmat)
 
   } else if (agg_method == "colrank") {
 
@@ -401,10 +399,10 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 #' https://pubmed.ncbi.nlm.nih.gov/34015329/
 #'
 #' all_rank: each cell type coexpression matrix is ranked across the entire
-#' matrix, then summed and rank standardized into [0, 1].
+#' matrix, then summed and rank standardized into \[0, 1\].
 #'
 #' col_rank: each cell type coexpression matrix is ranked column-wise, then
-#' summed and rank standardized into [0, 1].
+#' summed and rank standardized into \[0, 1\].
 #'
 #' FZ: Fisher's Z transformation is applied to each cell type coexpression
 #' matrix, which are then summed and divided element-wise by the count of times
@@ -525,10 +523,10 @@ load_scdat <- function(path) {
 #' https://pubmed.ncbi.nlm.nih.gov/34015329/
 #'
 #' all_rank: each cell type coexpression matrix is ranked across the entire
-#' matrix, then summed and rank standardized into [0, 1].
+#' matrix, then summed and rank standardized into \[0, 1\].
 #'
 #' col_rank: each cell type coexpression matrix is ranked column-wise, then
-#' summed and rank standardized into [0, 1].
+#' summed and rank standardized into \[0, 1\].
 #'
 #' FZ: Fisher's Z transformation is applied to each cell type coexpression
 #' matrix, which are then summed and divided element-wise by the count of times
