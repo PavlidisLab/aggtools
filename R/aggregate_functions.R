@@ -1,6 +1,3 @@
-# TODO: consider trying to force to sparse in cor call?
-
-
 #' Rank the columns of a matrix such that rank=1 is the highest positive value
 #'
 #' @param mat A numeric matrix
@@ -313,8 +310,8 @@ increment_na_mat <- function(cmat, na_mat) {
 #' @examples
 transform_correlation_mat <- function(cmat, agg_method) {
 
-  stopifnot(agg_method %in% c("allrank", "colrank", "FZ"))
-  stopifnot(is.matrix(cmat), identical(rownames(cmat), colnames(cmat)))
+  stopifnot(agg_method %in% c("allrank", "colrank", "FZ"),
+            is.matrix(cmat), identical(rownames(cmat), colnames(cmat)))
 
   cmat <- cmat %>%
     na_to_zero() %>%
@@ -367,8 +364,8 @@ transform_correlation_mat <- function(cmat, agg_method) {
 #' @examples
 finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 
-  stopifnot(agg_method %in% c("allrank", "colrank", "FZ"))
-  stopifnot(is.matrix(amat), identical(rownames(amat), colnames(amat)))
+  stopifnot(agg_method %in% c("allrank", "colrank", "FZ"),
+            is.matrix(amat), identical(rownames(amat), colnames(amat)))
 
   if (agg_method == "allrank") {
 
@@ -421,7 +418,6 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 #' @param min_cell A non-negative integer corresponding to how many cells of a
 #' cell type must have at least one count for a gene to be considered "measured"
 #' and thus viable for calculating correlation
-#'
 #' @param verbose Logical determining if the current cell type and time should
 #' be displayed as a message during iteration
 #'
@@ -439,8 +435,8 @@ aggr_coexpr_within_dataset <- function(mat,
                                        min_cell = 20,
                                        verbose = TRUE) {
 
-  stopifnot(cor_method %in% c("pearson", "spearman"))
-  stopifnot(agg_method %in% c("allrank", "colrank", "FZ"))
+  stopifnot(cor_method %in% c("pearson", "spearman"),
+            agg_method %in% c("allrank", "colrank", "FZ"))
 
   cts <- unique(meta[["Cell_type"]])
   n_cts <- length(cts)
@@ -485,4 +481,136 @@ aggr_coexpr_within_dataset <- function(mat,
   amat <- finalize_agg_mat(amat, agg_method, n_cts, na_mat)
   return(list(Agg_mat = amat, NA_mat = na_mat))
 
+}
+
+
+
+
+#' Load a single cell dataset
+#'
+#' Assumes path leads to an RDS of a list with 2 named elements: "Mat", the
+#' sparse count matrix, and "Meta", a metadata data frame mapping cell IDs to an
+#' annotated cell type
+#'
+#' @param path A character corresponding to the path of the dataset
+#'
+#' @return A list of the single cell count matrix and cell type metadata
+#' @export
+#'
+#' @examples
+load_scdat <- function(path) {
+
+  stopifnot(file.exists(path))
+
+  dat <- readRDS(path)
+  meta <- dat[["Meta"]]
+  mat <- dat[["Mat"]]
+  stopifnot(identical(colnames(mat), meta[["ID"]]))
+
+  return(list(Mat = mat, Meta = meta))
+}
+
+
+
+#' Aggregate cell type correlation matrices across datasets
+#'
+#' Iteratively loads datasets in input_dat, subsetting the count matrix of each
+#' to the specified cell type and generating a cell type coexpression matrix,
+#' which are then all aggregated into a single matrix. Note that if multiple
+#' cell types are listed for a single dataset ID, these cell types are
+#' collapsed into one matrix for calculating coexpression and tracking measurement.
+#'
+#' https://pubmed.ncbi.nlm.nih.gov/27165153/
+#' https://pubmed.ncbi.nlm.nih.gov/25717192/
+#' https://pubmed.ncbi.nlm.nih.gov/34015329/
+#'
+#' all_rank: each cell type coexpression matrix is ranked across the entire
+#' matrix, then summed and rank standardized into [0, 1].
+#'
+#' col_rank: each cell type coexpression matrix is ranked column-wise, then
+#' summed and rank standardized into [0, 1].
+#'
+#' FZ: Fisher's Z transformation is applied to each cell type coexpression
+#' matrix, which are then summed and divided element-wise by the count of times
+#' a given gene-gene pair was co-measured across all cell types.
+#'
+#' @param input_df A dataframe of the dataset paths and cell types to consider
+#' @param pc_df A data frame of unique protein coding gene symbols
+#' @param cor_method One of "pearson" or "spearman"
+#' @param agg_method One of "allrank", "colrank", or "FZ"
+#' @param min_cell A non-negative integer corresponding to how many cells of a
+#' cell type must have at least one count for a gene to be considered "measured"
+#' and thus viable for calculating correlation
+#' @param verbose Logical determining if the current cell type and time should
+#' be displayed as a message during iteration
+#'
+#' @return A list of two gene by gene matrices, the first of which is the
+#' aggregate coexpression matrix and the second of which is the NA tracking
+#' matrix
+#' @export
+#'
+#' @examples
+aggr_coexpr_across_datasets <- function(input_df,
+                                        pc_df,
+                                        cor_method = "pearson",
+                                        agg_method = "FZ",
+                                        min_cell = 20,
+                                        verbose = TRUE) {
+
+  stopifnot(cor_method %in% c("pearson", "spearman"),
+            agg_method %in% c("allrank", "colrank", "FZ"),
+            c("Path", "Cell_type" %in% colnames(input_df)))
+
+  data_ids <- unique(input_df[["ID"]])
+  n_cts <- length(data_ids) # All cell types for a dataset are collapsed
+
+  # Matrices of 0s for tracking aggregate correlation and count of NAs
+
+  amat <- init_agg_mat(pc_df)
+  na_mat <- amat
+
+  for (id in data_ids) {
+
+    if (verbose) message(paste(id, Sys.time()))
+
+    ct <- filter(input_df, ID == id)[["Cell_type"]]
+    dat_path <- unique(filter(input_df, ID == id)[["Path"]])
+
+    # Load dataset and get count matrix for current cell type
+
+    dat = load_scdat(dat_path)
+
+    ct_mat <- prepare_celltype_mat(mat = dat[["Mat"]],
+                                   meta = dat[["Meta"]],
+                                   cell_type = ct,
+                                   min_cell = min_cell)
+
+    # Check if filtering removed all genes
+
+    no_msr <- all(ct_mat == 0)
+
+    if (no_msr) {
+      message(paste(ct, "skipped due to insufficient counts"))
+      na_mat <- na_mat + 1
+      next()
+    }
+
+    # Get cell-type cor matrix and increment count of NAs before imputing to 0
+
+    cmat <- calc_sparse_correlation(ct_mat, cor_method)
+    na_mat <- increment_na_mat(cmat, na_mat)
+
+    # Transform raw correlation matrix, add to aggregate and clean up
+
+    cmat <- transform_correlation_mat(cmat, agg_method)
+    amat <- amat + cmat
+    rm(cmat, ct_mat)
+    gc(verbose = FALSE)
+
+  }
+
+  # Final format of aggregate matrix and return along with the tracked NA mat
+
+  amat <- finalize_agg_mat(amat, agg_method, n_cts, na_mat)
+  return(list(Agg_mat = amat, NA_mat = na_mat))
 }
