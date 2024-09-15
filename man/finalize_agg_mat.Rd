@@ -25,7 +25,7 @@ Format the final summed aggregate correlations depending on the aggregate
 strategy.
 }
 \details{
-all_rank: jointly re-rank the summed ranks and standardize into [\0, 1], then
+all_rank: jointly re-rank the summed ranks and standardize into [0, 1], then
 convert back to a symmetric matrix for ease of downstream operations
 
 col_rank: re-rank the summed ranks for each column separately and standardize
@@ -33,6 +33,4 @@ into [0, 1]
 
 FZ: divide each element by its count of its measured (i.e., non-NA)
 observations
-
-[\0, 1]: R:\%5C\%5C0,\%201\%5C
 }
