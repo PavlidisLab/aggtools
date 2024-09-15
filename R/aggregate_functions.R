@@ -551,15 +551,15 @@ load_scdat <- function(path) {
 #'
 #' @examples
 aggr_coexpr_multi_dataset <- function(input_df,
-                                        pc_df,
-                                        cor_method,
-                                        agg_method,
-                                        min_cell = 20,
-                                        verbose = TRUE) {
+                                      pc_df,
+                                      cor_method,
+                                      agg_method,
+                                      min_cell = 20,
+                                      verbose = TRUE) {
 
   stopifnot(cor_method %in% c("pearson", "spearman"),
             agg_method %in% c("allrank", "colrank", "FZ"),
-            c("Path", "Cell_type" %in% colnames(input_df)))
+            all(c("Path", "Cell_type") %in% colnames(input_df)))
 
   data_ids <- unique(input_df[["ID"]])
   n_dat <- length(data_ids) # All cell types for a dataset are collapsed
