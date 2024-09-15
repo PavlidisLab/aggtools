@@ -505,7 +505,7 @@ load_scdat <- function(path) {
   dat <- readRDS(path)
   meta <- dat[["Meta"]]
   mat <- dat[["Mat"]]
-  stopifnot(identical(colnames(mat), meta[["ID"]]))
+  stopifnot(all(colnames(mat) %in% meta[["ID"]]))
 
   return(list(Mat = mat, Meta = meta))
 }

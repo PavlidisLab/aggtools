@@ -650,3 +650,39 @@ test_that("aggr_coexpr_single_dataset works for Pearson correlation", {
 #
 # })
 
+
+
+# load_scdat()
+# ------------------------------------------------------------------------------
+
+
+test_that("load_scdat loads valid paths and checks object", {
+
+  #  Generate mock data and give list expected names before saving temp .RDS
+  test_data <- generate_test_data()
+  test_data <- list(Mat = test_data$mat_sparse, Meta = test_data$meta)
+  temp_file <- tempfile(fileext = ".RDS")
+  saveRDS(test_data, temp_file)
+
+  # Mock data with cell IDs that do not match between metadata and matrix
+  mismatch_test_data <- test_data
+  colnames(mismatch_test_data$Mat) <- as.character(sample(1:100, 100))
+  mismatch_temp_file <- tempfile(fileext = ".RDS")
+  saveRDS(mismatch_test_data, mismatch_temp_file)
+
+  result <- load_scdat(temp_file)
+
+  expect_true(inherits(result$Mat, "dgCMatrix"))
+  expect_true(inherits(result$Meta, "data.frame"))
+
+  expect_equal(result$Mat, test_data$Mat)
+  expect_equal(result$Meta, test_data$Meta)
+
+  expect_error(load_scdat(path = "A/surely/fake/path.RDS"))
+  expect_error(load_scdat(mismatch_temp_file))
+
+  unlink(temp_file)
+  unlink(mismatch_temp_file)
+
+})
+
