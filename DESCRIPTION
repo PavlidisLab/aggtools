@@ -1,14 +1,15 @@
 Package: aggtools
-Title: Aggregating and Comparing Gene Vectors
+Title: Aggregating single cell gene coexpression
 Version: 0.0.0.9000
 Authors@R: 
     person("Alexander", "Morin", , "amorin@msl.ubc.ca", role = c("aut", "cre"))
-Description: 
+Description: Functionality to combine single cell gene coexpression matrices into one gene by gene matrix.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
+    Matrix,
     qlcMatrix (>= 0.9.8)
 Suggests: 
     testthat (>= 3.0.0)
