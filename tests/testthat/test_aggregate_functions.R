@@ -1,5 +1,5 @@
 # TODO: more explicit check of NA content in sparse_cor()
-# TODO: revisit aggr_coexpr_within_dataset test of insufficient counts
+# TODO: revisit aggr_coexpr_single_dataset test of insufficient counts
 
 
 # Helper to create mock data
@@ -580,30 +580,30 @@ test_that("finalize_agg_mat works correctly with FZ", {
 
 
 
-# aggr_coexpr_within_dataset()
+# aggr_coexpr_single_dataset()
 # ------------------------------------------------------------------------------
 
 
 
-test_that("aggr_coexpr_within_dataset works for Pearson correlation", {
+test_that("aggr_coexpr_single_dataset works for Pearson correlation", {
 
   test_data <- generate_test_data()
 
-  result_allrank <- aggr_coexpr_within_dataset(mat = test_data$mat_sparse,
+  result_allrank <- aggr_coexpr_single_dataset(mat = test_data$mat_sparse,
                                                meta = test_data$meta,
                                                pc_df = test_data$pc_df,
                                                cor_method = "pearson",
                                                agg_method = "allrank",
                                                verbose = FALSE)
 
-  result_colrank <- aggr_coexpr_within_dataset(mat = test_data$mat_sparse,
+  result_colrank <- aggr_coexpr_single_dataset(mat = test_data$mat_sparse,
                                                meta = test_data$meta,
                                                pc_df = test_data$pc_df,
                                                cor_method = "pearson",
                                                agg_method = "colrank",
                                                verbose = FALSE)
 
-  result_fz <- aggr_coexpr_within_dataset(mat = test_data$mat_sparse,
+  result_fz <- aggr_coexpr_single_dataset(mat = test_data$mat_sparse,
                                           meta = test_data$meta,
                                           pc_df = test_data$pc_df,
                                           cor_method = "pearson",
@@ -632,10 +632,10 @@ test_that("aggr_coexpr_within_dataset works for Pearson correlation", {
 
 
 
-# test_that("aggr_coexpr_within_dataset handles insufficient counts", {
+# test_that("aggr_coexpr_single_dataset handles insufficient counts", {
 #
 #   # Set min_cell to a high number to force insufficient counts
-#   result <- aggr_coexpr_within_dataset(mat = test_data$mat_sparse,
+#   result <- aggr_coexpr_single_dataset(mat = test_data$mat_sparse,
 #                                        meta = test_data$meta,
 #                                        pc_df = test_data$pc_df,
 #                                        cor_method = "pearson",

@@ -427,7 +427,7 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 #' @export
 #'
 #' @examples
-aggr_coexpr_within_dataset <- function(mat,
+aggr_coexpr_single_dataset <- function(mat,
                                        meta,
                                        pc_df,
                                        cor_method,
@@ -550,10 +550,10 @@ load_scdat <- function(path) {
 #' @export
 #'
 #' @examples
-aggr_coexpr_across_datasets <- function(input_df,
+aggr_coexpr_multi_dataset <- function(input_df,
                                         pc_df,
-                                        cor_method = "pearson",
-                                        agg_method = "FZ",
+                                        cor_method,
+                                        agg_method,
                                         min_cell = 20,
                                         verbose = TRUE) {
 
