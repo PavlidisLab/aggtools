@@ -260,7 +260,7 @@ prepare_celltype_mat <- function(mat, meta, cell_type, min_cell = 20) {
 init_agg_mat <- function(pc_df) {
 
   stopifnot("Symbol" %in% colnames(pc_df),
-            length(unique(pc_df[["Symbol"]])) == length(pc_df[["Symbol"]]))
+            anyDuplicated(pc_df[["Symbol"]]) == 0)
 
   amat <- matrix(0, nrow = nrow(pc_df), ncol = nrow(pc_df))
   rownames(amat) <- colnames(amat) <- pc_df[["Symbol"]]
@@ -503,7 +503,7 @@ aggr_coexpr_single_dataset <- function(mat,
 #' @examples
 load_scdat <- function(path) {
 
-  stopifnot(file.exists(path))
+  stopifnot(is.character(path), length(path) == 1, file.exists(path))
 
   dat <- readRDS(path)
   meta <- dat[["Meta"]]
