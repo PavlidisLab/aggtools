@@ -218,6 +218,7 @@ zero_sparse_cols <- function(mat, min_cell = 20) {
 
 #' @param mat A sparse gene by cell matrix
 #' @param meta A data frame that maps cell IDs to cell types
+#' @param pc_df A data frame of unique protein coding gene symbols
 #' @param cell_type A character of the cell type to subset mat on
 #' @param min_cell A non-negative integer corresponding to how many cells of a
 #' cell type must have at least one count for a gene to be considered "measured"
@@ -226,18 +227,18 @@ zero_sparse_cols <- function(mat, min_cell = 20) {
 #' @export
 #'
 #' @examples
-prepare_celltype_mat <- function(mat, meta, cell_type, min_cell = 20) {
+prepare_celltype_mat <- function(mat, meta, pc_df, cell_type, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
             c("ID", "Cell_type") %in% colnames(meta),
-            cell_type %in% meta[["Cell_type"]])
+            cell_type %in% meta[["Cell_type"]],
+            identical(rownames(mat), pc_df$Symbol))
 
   ids <- meta[meta$Cell_type %in% cell_type, "ID"]
   stopifnot(all(ids %in% colnames(mat)))
 
-  ct_mat <- t(mat[, ids])
+  ct_mat <- t(mat[pc_df$Symbol, ids])
   ct_mat <- zero_sparse_cols(ct_mat, min_cell)
-  stopifnot(all(rownames(ct_mat) %in% meta[["ID"]]))
 
   return(ct_mat)
 }
@@ -455,7 +456,11 @@ aggr_coexpr_single_dataset <- function(mat,
 
     # Get count matrix for current cell type, coercing low count genes to 0
 
-    ct_mat <- prepare_celltype_mat(mat, meta, ct, min_cell)
+    ct_mat <- prepare_celltype_mat(mat = mat,
+                                   meta = meta,
+                                   pc_df = pc_df,
+                                   cell_type = ct,
+                                   min_cell = min_cell)
 
     no_msr <- all(ct_mat == 0)
 
@@ -585,6 +590,7 @@ aggr_coexpr_multi_dataset <- function(input_df,
 
     ct_mat <- prepare_celltype_mat(mat = dat[["Mat"]],
                                    meta = dat[["Meta"]],
+                                   pc_df = pc_df,
                                    cell_type = ct,
                                    min_cell = min_cell)
 

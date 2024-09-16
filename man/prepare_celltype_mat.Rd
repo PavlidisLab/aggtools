@@ -4,12 +4,14 @@
 \alias{prepare_celltype_mat}
 \title{Prepare a cell type matrix for coexpression}
 \usage{
-prepare_celltype_mat(mat, meta, cell_type, min_cell = 20)
+prepare_celltype_mat(mat, meta, pc_df, cell_type, min_cell = 20)
 }
 \arguments{
 \item{mat}{A sparse gene by cell matrix}
 
 \item{meta}{A data frame that maps cell IDs to cell types}
+
+\item{pc_df}{A data frame of unique protein coding gene symbols}
 
 \item{cell_type}{A character of the cell type to subset mat on}
 

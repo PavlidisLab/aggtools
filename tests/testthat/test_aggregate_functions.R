@@ -312,6 +312,7 @@ test_that("prepare_celltype_mat works with sparse matrix and default settings", 
 
   result <- prepare_celltype_mat(mat = test_data$mat_sparse,
                                  meta = test_data$meta,
+                                 pc_df = test_data$pc_df,
                                  cell_type = "Type1")
 
   expect_true(all(result[, 1] == 0))
@@ -333,6 +334,7 @@ test_that("prepare_celltype_mat handles case where no genes meet the min_cell", 
 
   result_sparse <- prepare_celltype_mat(mat = mat_sparse,
                                         meta = test_data$meta,
+                                        pc_df = test_data$pc_df,
                                         cell_type = "Type1")
 
   expect_true(all(result_sparse == 0))
@@ -347,6 +349,7 @@ test_that("prepare_celltype_mat handles invalid cell_type", {
 
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
                                     meta = test_data$meta,
+                                    pc_df = test_data$pc_df,
                                     cell_type = "InvalidType"))
 
 })
@@ -360,6 +363,7 @@ test_that("prepare_celltype_mat handles incorrect metadata format", {
 
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
                                     meta = invalid_meta,
+                                    pc_df = test_data$pc_df,
                                     cell_type = "Type1"))
 
 })
@@ -371,16 +375,19 @@ test_that("prepare_celltype_mat handles arguments", {
   test_data <- generate_test_data()
 
   expect_error(prepare_celltype_mat(mat = test_data$mat_dense,
-                                    test_data$meta,
+                                    meta = test_data$meta,
+                                    pc_df = test_data$pc_df,
                                     cell_type = "Type1"))
 
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
-                                    test_data$meta,
+                                    meta = test_data$meta,
+                                    pc_df = test_data$pc_df,
                                     cell_type = "Type1",
                                     min_cell = -1))
 
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
-                                    test_data$meta,
+                                    meta = test_data$meta,
+                                    pc_df = test_data$pc_df,
                                     cell_type = "Type1",
                                     min_cell = nrow(mat_dense) + 1))
 })
@@ -398,9 +405,25 @@ test_that("prepare_celltype_mat checks all cell IDs are in matrix", {
 
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
                                     meta = meta,
+                                    pc_df = test_data$pc_df,
                                     cell_type = "Type1"))
 
 })
+
+
+
+test_that("prepare_celltype_mat ensures symbol match between matrix and gene table", {
+
+  test_data <- generate_test_data()
+  test_data$pc_df$Symbol <- rev(test_data$pc_df$Symbol)
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+                                    meta = test_data$meta,
+                                    pc_df = test_data$pc_df,
+                                    cell_type = "Type1"))
+
+})
+
 
 
 
