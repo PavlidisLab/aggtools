@@ -316,6 +316,11 @@ transform_correlation_mat <- function(cmat, agg_method) {
   cmat <- na_to_zero(cmat)
   cmat <- diag_to_one(cmat)
 
+  # Coerce values slightly above 1 or below -1 due to floating-point precision
+
+  cmat[cmat > 1] <- 1
+  cmat[cmat < -1] <- -1
+
   if (agg_method == "allrank") {
 
     cmat <- uppertri_to_na(cmat)
@@ -576,7 +581,7 @@ aggr_coexpr_multi_dataset <- function(input_df,
 
     # Load dataset and get count matrix for current cell type
 
-    dat = load_scdat(dat_path)
+    dat <- load_scdat(dat_path)
 
     ct_mat <- prepare_celltype_mat(mat = dat[["Mat"]],
                                    meta = dat[["Meta"]],
