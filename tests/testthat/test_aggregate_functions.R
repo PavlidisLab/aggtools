@@ -654,6 +654,43 @@ test_that("aggr_coexpr_single_dataset works for Pearson correlation", {
 
 
 
+test_that("aggr_coexpr_single_dataset performs basic argument checks", {
+
+  test_data <- generate_test_data()
+
+  expect_error(aggr_coexpr_single_dataset(mat = NULL,
+                                          meta = test_data$meta,
+                                          pc_df = test_data$pc_df,
+                                          cor_method = "pearson",
+                                          agg_method = "allrank",
+                                          verbose = FALSE))
+
+  expect_error(aggr_coexpr_single_dataset(mat = test_data$mat_sparse,
+                                          meta = NULL,
+                                          pc_df = test_data$pc_df,
+                                          cor_method = "pearson",
+                                          agg_method = "allrank",
+                                          verbose = FALSE))
+
+  expect_error(aggr_coexpr_single_dataset(mat = test_data$mat_sparse,
+                                          meta = test_data$meta,
+                                          pc_df = test_data$pc_df,
+                                          # cor_method = "pearson",
+                                          agg_method = "allrank",
+                                          verbose = FALSE))
+
+  expect_error(aggr_coexpr_single_dataset(mat = test_data$mat_sparse,
+                                          meta = test_data$meta,
+                                          pc_df = test_data$pc_df,
+                                          cor_method = "pearson",
+                                          # agg_method = "allrank",
+                                          verbose = FALSE))
+
+
+
+})
+
+
 
 # test_that("aggr_coexpr_single_dataset handles insufficient counts", {
 #
