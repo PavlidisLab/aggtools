@@ -50,7 +50,7 @@ allrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 #' @examples
 fisherz <- function(cor) {
 
-  stopifnot(is.numeric(cor), all(cor >= -1 & cor <= 1))
+  stopifnot(is.numeric(cor), all(cor >= -1 && cor <= 1))
 
   fz <- 0.5 * log((1 + cor) / (1 - cor))
   return(fz)
@@ -200,7 +200,7 @@ zero_sparse_cols <- function(mat, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
             is.numeric(min_cell),
-            min_cell >= 0 & min_cell <= nrow(mat))
+            min_cell >= 0 && min_cell <= nrow(mat))
 
   nonzero_cells <- colSums(mat != 0)
   filt_genes <- nonzero_cells < min_cell
@@ -439,7 +439,9 @@ aggr_coexpr_single_dataset <- function(mat,
                                        min_cell = 20,
                                        verbose = TRUE) {
 
-  stopifnot(cor_method %in% c("pearson", "spearman"),
+  stopifnot(inherits(mat, "dgCMatrix"),
+            c("ID", "Cell_type") %in% colnames(meta),
+            cor_method %in% c("pearson", "spearman"),
             agg_method %in% c("allrank", "colrank", "FZ"))
 
   cts <- unique(meta[["Cell_type"]])
@@ -565,9 +567,9 @@ aggr_coexpr_multi_dataset <- function(input_df,
                                       min_cell = 20,
                                       verbose = TRUE) {
 
-  stopifnot(cor_method %in% c("pearson", "spearman"),
-            agg_method %in% c("allrank", "colrank", "FZ"),
-            all(c("Path", "Cell_type") %in% colnames(input_df)))
+  stopifnot(all(c("ID", "Cell_type", "Path") %in% colnames(input_df)),
+            cor_method %in% c("pearson", "spearman"),
+            agg_method %in% c("allrank", "colrank", "FZ"))
 
   data_ids <- unique(input_df[["ID"]])
   n_dat <- length(data_ids) # All cell types for a dataset are collapsed
