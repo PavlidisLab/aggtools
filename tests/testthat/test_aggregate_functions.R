@@ -374,11 +374,13 @@ test_that("prepare_celltype_mat handles arguments", {
 
   test_data <- generate_test_data()
 
+  # Error if dense matrix supplied as argument
   expect_error(prepare_celltype_mat(mat = test_data$mat_dense,
                                     meta = test_data$meta,
                                     pc_df = test_data$pc_df,
                                     cell_type = "Type1"))
 
+  # Error with min cell argument
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
                                     meta = test_data$meta,
                                     pc_df = test_data$pc_df,
@@ -398,10 +400,21 @@ test_that("prepare_celltype_mat checks all cell IDs are in matrix", {
 
   test_data <- generate_test_data()
 
+  # IDs found that are in meta but not count matrix
+
   add_mock <- data.frame(ID = paste0("Cell", 101:110),
                          Cell_type = rep("Type1", 10))
 
   meta <- rbind(test_data$meta, add_mock)
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+                                    meta = meta,
+                                    pc_df = test_data$pc_df,
+                                    cell_type = "Type1"))
+
+  # No common IDs found at all
+
+  meta$ID <- paste0("Cell", 201:310)
 
   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
                                     meta = meta,
