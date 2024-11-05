@@ -50,7 +50,7 @@ allrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 #' @examples
 fisherz <- function(cor) {
 
-  stopifnot(is.numeric(cor), all(cor >= -1 && cor <= 1))
+  stopifnot(is.numeric(cor), all(cor >= -1 & cor <= 1))
 
   fz <- 0.5 * log((1 + cor) / (1 - cor))
   return(fz)
