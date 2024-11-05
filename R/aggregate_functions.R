@@ -234,12 +234,14 @@ prepare_celltype_mat <- function(mat, meta, pc_df, cell_type, min_cell = 20) {
             cell_type %in% meta[["Cell_type"]],
             identical(rownames(mat), pc_df$Symbol))
 
-  ids <- meta[meta$Cell_type %in% cell_type, "ID"][["ID"]]
+  ct_meta <- meta[meta$Cell_type %in% cell_type, "ID", drop = FALSE]
+  ids <- ct_meta[["ID"]]
 
-  if (!all(ids %in% colnames(mat))) {
-    message(paste(id, "did not have all meta IDs in mat column names"))
-    ids <- intersect(ids, colnames(mat))
-  }
+  common <- intersect(ids, colnames(mat))
+  diff <- setdiff(ids, colnames(mat))
+
+  if (length(common) == 0) stop("No common IDs between metadata and count matrix")
+  if (length(diff) > 0) stop("Not all IDs in metadata are in count matrix")
 
   ct_mat <- t(mat[pc_df$Symbol, ids])
   ct_mat <- zero_sparse_cols(ct_mat, min_cell)
