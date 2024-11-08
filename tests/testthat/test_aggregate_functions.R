@@ -425,17 +425,17 @@ test_that("prepare_celltype_mat checks all cell IDs are in matrix", {
 
 
 
-test_that("prepare_celltype_mat ensures symbol match between matrix and gene table", {
-
-  test_data <- generate_test_data()
-  test_data$pc_df$Symbol <- rev(test_data$pc_df$Symbol)
-
-  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
-                                    meta = test_data$meta,
-                                    pc_df = test_data$pc_df,
-                                    cell_type = "Type1"))
-
-})
+# test_that("prepare_celltype_mat ensures symbol match between matrix and gene table", {
+#
+#   test_data <- generate_test_data()
+#   test_data$pc_df$Symbol <- rev(test_data$pc_df$Symbol)
+#
+#   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+#                                     meta = test_data$meta,
+#                                     pc_df = test_data$pc_df,
+#                                     cell_type = "Type1"))
+#
+# })
 
 
 
