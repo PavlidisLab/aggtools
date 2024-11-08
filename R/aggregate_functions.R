@@ -231,17 +231,19 @@ prepare_celltype_mat <- function(mat, meta, pc_df, cell_type, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
             c("ID", "Cell_type") %in% colnames(meta),
-            cell_type %in% meta[["Cell_type"]],
-            identical(rownames(mat), pc_df$Symbol))
+            "Symbol" %in% colnames(pc_df),
+            cell_type %in% meta[["Cell_type"]])
 
   ct_meta <- meta[meta$Cell_type %in% cell_type, "ID", drop = FALSE]
   ids <- ct_meta[["ID"]]
 
   common <- intersect(ids, colnames(mat))
   diff <- setdiff(ids, colnames(mat))
+  genes <- intersect(rownames(mat), pc_df$Symbol)
 
   if (length(common) == 0) stop("No common IDs between metadata and count matrix")
   if (length(diff) > 0) stop("Not all IDs in metadata are in count matrix")
+  if (length(genes) == 0) stop("No common genes between pc_df and count matrix")
 
   ct_mat <- t(mat[pc_df$Symbol, ids])
   ct_mat <- zero_sparse_cols(ct_mat, min_cell)
@@ -631,6 +633,3 @@ aggr_coexpr_multi_dataset <- function(input_df,
   amat <- finalize_agg_mat(amat, agg_method, n_dat, na_mat)
   return(list(Agg_mat = amat, NA_mat = na_mat))
 }
-
-
-test()
