@@ -213,8 +213,9 @@ zero_sparse_cols <- function(mat, min_cell = 20) {
 
 #' Prepare a cell type matrix for coexpression
 #'
-#' Subset mat to cells annotated to the input cell_type, set sparse genes to 0
-#' and transpose the resulting matrix.
+#' Subset a sparse gene by cell count matrix to cells annotated to the input
+#' cell_type and genes contained in pc_df, transpose the resulting matrix to
+#' cells by genes, and set sparse genes/columns to 0
 
 #' @param mat A sparse gene by cell matrix
 #' @param meta A data frame that maps cell IDs to cell types
@@ -237,13 +238,15 @@ prepare_celltype_mat <- function(mat, meta, pc_df, cell_type, min_cell = 20) {
   ct_meta <- meta[meta$Cell_type %in% cell_type, "ID", drop = FALSE]
   ids <- ct_meta[["ID"]]
 
-  common <- intersect(ids, colnames(mat))
-  diff <- setdiff(ids, colnames(mat))
-  genes <- intersect(rownames(mat), pc_df$Symbol)
+  common_ids <- intersect(ids, colnames(mat))
+  diff_ids <- setdiff(ids, colnames(mat))
+  common_genes <- intersect(rownames(mat), pc_df$Symbol)
+  diff_genes <- setdiff(pc_df$Symbol, rownames(mat))
 
-  if (length(common) == 0) stop("No common IDs between metadata and count matrix")
-  if (length(diff) > 0) stop("Not all IDs in metadata are in count matrix")
-  if (length(genes) == 0) stop("No common genes between pc_df and count matrix")
+  if (length(common_ids) == 0) stop("No common IDs between metadata and count matrix")
+  if (length(diff_ids) > 0) stop("Not all IDs in metadata are in count matrix")
+  if (length(common_genes) == 0) stop("No common genes between pc_df and count matrix")
+  if (length(diff_genes) > 0) stop("Not all genes in pc_df are found in count matrix")
 
   ct_mat <- t(mat[pc_df$Symbol, ids])
   ct_mat <- zero_sparse_cols(ct_mat, min_cell)
