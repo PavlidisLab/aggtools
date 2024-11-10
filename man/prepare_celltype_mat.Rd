@@ -22,6 +22,7 @@ cell type must have at least one count for a gene to be considered "measured"}
 A sparse cell by gene matrix
 }
 \description{
-Subset mat to cells annotated to the input cell_type, set sparse genes to 0
-and transpose the resulting matrix.
+Subset a sparse gene by cell count matrix to cells annotated to the input
+cell_type and genes contained in pc_df, transpose the resulting matrix to
+cells by genes, and set sparse genes/columns to 0
 }
