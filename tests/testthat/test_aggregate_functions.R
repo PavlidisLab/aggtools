@@ -425,17 +425,30 @@ test_that("prepare_celltype_mat checks all cell IDs are in matrix", {
 
 
 
-# test_that("prepare_celltype_mat ensures symbol match between matrix and gene table", {
-#
-#   test_data <- generate_test_data()
-#   test_data$pc_df$Symbol <- rev(test_data$pc_df$Symbol)
-#
-#   expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
-#                                     meta = test_data$meta,
-#                                     pc_df = test_data$pc_df,
-#                                     cell_type = "Type1"))
-#
-# })
+test_that("prepare_celltype_mat ensures symbol match between matrix and gene table", {
+
+  # Works when genes in count matrix are a subset of those in gene table
+  test_data <- generate_test_data()
+  test_data$pc_df <- test_data$pc_df[1:50, , drop = FALSE]
+
+  result <- prepare_celltype_mat(mat = test_data$mat_sparse,
+                                 meta = test_data$meta,
+                                 pc_df = test_data$pc_df,
+                                 cell_type = "Type1")
+
+  expect_equal(ncol(result), 50)
+  expect_equal(colnames(result), test_data$pc_df$Symbol)
+
+  # Throws an error when not all genes in gene table are in count matrix
+  test_data$pc_df <- rbind(test_data$pc_df,
+                           data.frame(Symbol = paste0("Gene", 200:230)))
+
+  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
+                                    meta = test_data$meta,
+                                    pc_df = test_data$pc_df,
+                                    cell_type = "Type1"))
+
+})
 
 
 
