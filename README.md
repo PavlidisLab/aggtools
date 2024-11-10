@@ -2,7 +2,7 @@
 
 Basic functionality
 
-```
+```         
 devtools::install_github("PavlidisLab/aggtools")
 library(aggtools)
 
@@ -16,17 +16,20 @@ result <- aggr_coexpr_single_dataset(mat = dat$Mat,
                                      cor_method = "pearson",
                                      agg_method = "FZ",
                                      verbose = TRUE)
-
 ```
 
-NOTE: Current implementation has strict assumptions about the input data:
+Current implementation has strict assumptions about the input data:
 
-1) pc_df is a data.frame with a "Symbol" column whose elements are unique and exactly match the input count matrix rownames
-2) meta is a data.frame that has an "ID" and "Cell_type" columns (the latter is the grouping factor for aggregation, and thus could be use for things like different subjects or conditions)
-3) mat is a sparse matrix of class "dgCMatrix" (see package Matrix::)
-4) all column names of mat are found in the "ID" column of meta
+1)  `pc_df` is a data.frame with a "Symbol" column whose elements are unique and contain all gene/rownames of `mat`. Only the elements in `pc_df$Symbol` are kept: `mat` will be subset to these genes. An error will be thrown if `mat` has genes that are not found in `pc_df`.
+
+2)  `meta` is a data.frame that has "ID" and "Cell_type" columns -- the latter is the grouping factor for aggregation to subset for IDs/cells in `mat`. Currently if you want to subset by patient/condition/some other factor other than cell type, you would have to name the corresponding column in `meta` to "Cell_type".
+
+3)  `mat` is a gene (rows) by cell (columns) sparse matrix of class "dgCMatrix" (see package Matrix)
+
+4)  All column names (cell IDs) of `mat` are found in the "ID" column of `meta`.
 
 The multi dataset function makes these further assumptions:
 
-5) input_df is a data.frame of single cell datasets containing columns "ID", "Cell_type", and "Path"
-6) The data paths specified in input_df lead to .RDS objects of lists with two named elements: "Meta" for the metadata and "Mat" for the sparse count matrix
+5)  `input_df` is a data.frame of single cell datasets containing columns "ID", "Cell_type", and "Path".
+
+6)  The data paths specified in `input_df$Path` lead to .RDS objects of lists with two named elements: "Meta" for the metadata and "Mat" for the sparse count matrix.
