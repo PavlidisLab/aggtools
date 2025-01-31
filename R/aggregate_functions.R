@@ -200,7 +200,7 @@ zero_sparse_cols <- function(mat, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
             is.numeric(min_cell),
-            min_cell >= 0 && min_cell <= nrow(mat))
+            min_cell >= 0)
 
   nonzero_cells <- colSums(mat != 0)
   filt_genes <- nonzero_cells < min_cell
