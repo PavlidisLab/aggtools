@@ -329,18 +329,20 @@ transform_correlation_mat <- function(cmat, agg_method) {
   cmat <- diag_to_one(cmat)
 
   # Coerce values slightly above 1 or below -1 due to floating-point precision
-
   cmat[cmat > 1] <- 1
   cmat[cmat < -1] <- -1
 
   if (agg_method == "allrank") {
 
+    # Rank standardizing: larger values more important then divide by max rank
     cmat <- uppertri_to_na(cmat)
-    cmat <- allrank_mat(cmat)
+    cmat <- allrank_mat(-cmat, ties_arg = "min")
+    cmat <- cmat / max(cmat)
 
   } else if (agg_method == "colrank") {
 
-    cmat <- colrank_mat(cmat)
+    cmat <- colrank_mat(-cmat, ties_arg = "min")  # Larger values more important
+    cmat <- apply(cmat, 2, function(x) x / max(x)) # Rank std.
 
   } else if (agg_method == "FZ") {
 
@@ -384,15 +386,16 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 
   if (agg_method == "allrank") {
 
-    amat <- allrank_mat(amat) / sum(!is.na(amat))
-    amat <- diag_to_one(amat)
+    # Rank standardizing: larger values more important then divide by max rank
+    amat <- allrank_mat(-amat, ties_arg = "min")
+    amat <- max(amat, na.rm = TRUE)
+    amat <- diag_to_one(amat)  # Make aggregate symmetric and self cor = 1
     amat <- lowertri_to_symm(amat)
 
   } else if (agg_method == "colrank") {
 
-    amat <- colrank_mat(amat)
-    ngene <- nrow(amat)
-    amat <- apply(amat, 2, function(x) x/ngene)
+    amat <- colrank_mat(-amat, ties_arg = "min")  # Larger values more important
+    amat <- apply(amat, 2, function(x) x / max(x)) # Rank std.
 
   } else if (agg_method == "FZ") {
 
