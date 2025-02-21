@@ -34,7 +34,9 @@ allrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 
   rank_mat <- rank(-mat, ties.method = ties_arg, na.last = na_arg)
   rank_mat <- matrix(rank_mat, nrow = nrow(mat), ncol = ncol(mat))
-  rownames(rank_mat) <- colnames(rank_mat) <- rownames(mat)
+  rownames(rank_mat) <- rownames(mat)
+  colnames(rank_mat) <- colnames(mat)
+
   return(rank_mat)
 }
 
@@ -200,7 +202,7 @@ zero_sparse_cols <- function(mat, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
             is.numeric(min_cell),
-            min_cell >= 0 && min_cell <= nrow(mat))
+            min_cell >= 0)
 
   nonzero_cells <- colSums(mat != 0)
   filt_genes <- nonzero_cells < min_cell
@@ -329,18 +331,20 @@ transform_correlation_mat <- function(cmat, agg_method) {
   cmat <- diag_to_one(cmat)
 
   # Coerce values slightly above 1 or below -1 due to floating-point precision
-
   cmat[cmat > 1] <- 1
   cmat[cmat < -1] <- -1
 
   if (agg_method == "allrank") {
 
-    cmat <- uppertri_to_na(cmat)
-    cmat <- allrank_mat(cmat)
+    # Rank standardizing: larger values more important then divide by max rank
+    cmat <- uppertri_to_na(cmat)  # Prevent ranking symmetric elements
+    cmat <- allrank_mat(-cmat, ties_arg = "min")
+    cmat <- cmat / max(cmat, na.rm = TRUE)
 
   } else if (agg_method == "colrank") {
 
-    cmat <- colrank_mat(cmat)
+    cmat <- colrank_mat(-cmat, ties_arg = "min")  # Larger values more important
+    cmat <- apply(cmat, 2, function(x) x / max(x)) # Rank std.
 
   } else if (agg_method == "FZ") {
 
@@ -384,15 +388,16 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 
   if (agg_method == "allrank") {
 
-    amat <- allrank_mat(amat) / sum(!is.na(amat))
-    amat <- diag_to_one(amat)
+    # Rank standardizing: larger values more important then divide by max rank
+    amat <- allrank_mat(-amat, ties_arg = "min")
+    amat <- amat / max(amat, na.rm = TRUE)
+    amat <- diag_to_one(amat)  # Make aggregate symmetric and self cor = 1
     amat <- lowertri_to_symm(amat)
 
   } else if (agg_method == "colrank") {
 
-    amat <- colrank_mat(amat)
-    ngene <- nrow(amat)
-    amat <- apply(amat, 2, function(x) x/ngene)
+    amat <- colrank_mat(-amat, ties_arg = "min")  # Larger values more important
+    amat <- apply(amat, 2, function(x) x / max(x)) # Rank std.
 
   } else if (agg_method == "FZ") {
 
@@ -459,7 +464,6 @@ aggr_coexpr_single_dataset <- function(mat,
   n_cts <- length(cts)
 
   # Matrices of 0s for tracking aggregate correlation and count of NAs
-
   amat <- init_agg_mat(pc_df)
   na_mat <- amat
 
@@ -468,7 +472,6 @@ aggr_coexpr_single_dataset <- function(mat,
     if (verbose) message(paste(ct, Sys.time()))
 
     # Get count matrix for current cell type, coercing low count genes to 0
-
     ct_mat <- prepare_celltype_mat(mat = mat,
                                    meta = meta,
                                    pc_df = pc_df,
@@ -484,12 +487,10 @@ aggr_coexpr_single_dataset <- function(mat,
     }
 
     # Get cell-type cor matrix and increment count of NAs before imputing to 0
-
     cmat <- calc_sparse_correlation(ct_mat, cor_method)
     na_mat <- increment_na_mat(cmat, na_mat)
 
     # Transform raw correlation matrix, add to aggregate and clean up
-
     cmat <- transform_correlation_mat(cmat, agg_method)
     amat <- amat + cmat
     rm(cmat, ct_mat)
@@ -498,9 +499,10 @@ aggr_coexpr_single_dataset <- function(mat,
   }
 
   # Final format of aggregate matrix and return along with the tracked NA mat
-
   amat <- finalize_agg_mat(amat, agg_method, n_cts, na_mat)
-  return(list(Agg_mat = amat, NA_mat = na_mat))
+
+  return(list(Agg_mat = amat,
+              NA_mat = na_mat))
 
 }
 
@@ -586,7 +588,6 @@ aggr_coexpr_multi_dataset <- function(input_df,
   n_dat <- length(data_ids) # All cell types for a dataset are collapsed
 
   # Matrices of 0s for tracking aggregate correlation and count of NAs
-
   amat <- init_agg_mat(pc_df)
   na_mat <- amat
 
@@ -598,7 +599,6 @@ aggr_coexpr_multi_dataset <- function(input_df,
     dat_path <- unique(input_df[input_df$ID == id, "Path"])
 
     # Load dataset and get count matrix for current cell type
-
     dat <- load_scdat(dat_path)
 
     ct_mat <- prepare_celltype_mat(mat = dat[["Mat"]],
@@ -608,7 +608,6 @@ aggr_coexpr_multi_dataset <- function(input_df,
                                    min_cell = min_cell)
 
     # Check if filtering removed all genes
-
     no_msr <- all(ct_mat == 0)
 
     if (no_msr) {
@@ -618,12 +617,10 @@ aggr_coexpr_multi_dataset <- function(input_df,
     }
 
     # Get cell-type cor matrix and increment count of NAs before imputing to 0
-
     cmat <- calc_sparse_correlation(ct_mat, cor_method)
     na_mat <- increment_na_mat(cmat, na_mat)
 
     # Transform raw correlation matrix, add to aggregate and clean up
-
     cmat <- transform_correlation_mat(cmat, agg_method)
     amat <- amat + cmat
     rm(cmat, ct_mat)
@@ -634,5 +631,7 @@ aggr_coexpr_multi_dataset <- function(input_df,
   # Final format of aggregate matrix and return along with the tracked NA mat
 
   amat <- finalize_agg_mat(amat, agg_method, n_dat, na_mat)
-  return(list(Agg_mat = amat, NA_mat = na_mat))
+
+  return(list(Agg_mat = amat,
+              NA_mat = na_mat))
 }
