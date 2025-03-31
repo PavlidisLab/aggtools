@@ -267,19 +267,18 @@ test_that("zero_sparse_cols sets columns to 0 correctly for sparse matrix", {
 
 
 
-test_that("zero_sparse_cols handles edge cases for sparse matrix", {
+test_that("zero_sparse_cols 0s entire matrix if fewer cells than min_cell", {
 
   mat <- Matrix(c(1, 2, 3, 4, 5, 1, 2, 3, 4, 0), nrow = 5, ncol = 2, sparse = TRUE)
-  result <- zero_sparse_cols(mat, min_cell = 5)
+  result <- zero_sparse_cols(mat, min_cell = 6)
 
-  expect_true(all(result[, 2] == 0))
-  expect_error(zero_sparse_cols(mat, min_cell = 6))
+  expect_true(all(result == 0))
 
 })
 
 
 
-test_that("zero_sparse_cols handles minimum count of 0 for sparse matrix", {
+test_that("zero_sparse_cols preserves mat if min_count is 0", {
 
   mat <- Matrix(c(1, 2, 3, 4, 5), nrow = 5, ncol = 1, sparse = TRUE)
   result <- zero_sparse_cols(mat, min_cell = 0)
@@ -296,7 +295,6 @@ test_that("zero_sparse_cols checks arguments", {
 
   expect_error(zero_sparse_cols(mat_dense, min_cell = 1))
   expect_error(zero_sparse_cols(mat_sparse, min_cell = -1))
-  expect_error(zero_sparse_cols(mat_sparse, min_cell = 10))
 
 })
 
