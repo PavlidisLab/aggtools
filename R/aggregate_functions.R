@@ -309,16 +309,18 @@ increment_na_mat <- function(cmat, na_mat) {
 #' Each methods impute NA cors to 0 and ensure that the diagonal equals 1.
 #'
 #' allrank: make the matrix tri. to prevent double ranking symmetric elements
-#' and then jointly rank the matrix (lower rank = positive cor).
+#' and then jointly rank standardize the matrix into [0,1] such that higher pos.
+#' correlations are closer to 1.
 #'
-#' colrank: rank each column separately (lower rank = positive cor).
+#' colrank: rank standardize each column separately into [0,1] such that higher
+#' pos. correlations are closer to 1.
 #'
 #' FZ: perform Fisher's Z transform on the raw correlations
 
-#' @param cmat A gene by gene correlation matrix
+#' @param cmat A dense gene by gene correlation matrix
 #' @param agg_method One of "allrank", "colrank", or "FZ"
 #'
-#' @return A gene by gene matrix of transformed correlations
+#' @return A dense gene by gene matrix of transformed correlations
 #' @export
 #'
 #' @examples
@@ -330,21 +332,28 @@ transform_correlation_mat <- function(cmat, agg_method) {
   cmat <- na_to_zero(cmat)
   cmat <- diag_to_one(cmat)
 
-  # Coerce values slightly above 1 or below -1 due to floating-point precision
+  # Coerce floating-point precision issues
   cmat[cmat > 1] <- 1
   cmat[cmat < -1] <- -1
 
   if (agg_method == "allrank") {
 
-    # Rank standardizing: larger values more important then divide by max rank
-    cmat <- uppertri_to_na(cmat)  # Prevent ranking symmetric elements
+    # Prevent duplicate ranking of symmetric elements
+    cmat <- uppertri_to_na(cmat)
+
+    # Multiply by -1 to ensure higher correlations receive higher ranks
     cmat <- allrank_mat(-cmat, ties_arg = "min")
+
+    # Standardize to [0,1] by dividing by the max rank, ensuring max rank maps to 1
     cmat <- cmat / max(cmat, na.rm = TRUE)
 
   } else if (agg_method == "colrank") {
 
-    cmat <- colrank_mat(-cmat, ties_arg = "min")  # Larger values more important
-    cmat <- apply(cmat, 2, function(x) x / max(x)) # Rank std.
+    # Multiply by -1 so higher correlations get higher ranks in each column
+    cmat <- colrank_mat(-cmat, ties_arg = "min")
+
+    # Standardize each column separately
+    cmat <- apply(cmat, 2, function(x) x / max(x))
 
   } else if (agg_method == "FZ") {
 
