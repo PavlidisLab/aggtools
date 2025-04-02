@@ -337,6 +337,16 @@ test_that("prepare_celltype_mat handles case where no genes meet the min_cell", 
 
   expect_true(all(result_sparse == 0))
 
+  # Also check that matrix is all 0 if fewer cells than min count
+  result_sparse <- prepare_celltype_mat(mat = test_data$mat_sparse,
+                                        meta = test_data$meta,
+                                        pc_df = test_data$pc_df,
+                                        cell_type = "Type1",
+                                        min_cell = nrow(test_data$mat_sparse) + 1)
+
+  expect_true(all(result_sparse == 0))
+
+
 })
 
 
@@ -384,12 +394,6 @@ test_that("prepare_celltype_mat handles arguments", {
                                     pc_df = test_data$pc_df,
                                     cell_type = "Type1",
                                     min_cell = -1))
-
-  expect_error(prepare_celltype_mat(mat = test_data$mat_sparse,
-                                    meta = test_data$meta,
-                                    pc_df = test_data$pc_df,
-                                    cell_type = "Type1",
-                                    min_cell = nrow(mat_dense) + 1))
 })
 
 
