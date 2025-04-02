@@ -502,13 +502,24 @@ test_that("increment_na_mat works correctly", {
 
 test_that("transform_correlation_mat works correctly with allrank", {
 
-  mat <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
-  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
-  result <- transform_correlation_mat(mat, "allrank")
-  expected <- matrix(c(1, 3, NA, 1), 2, 2)
-  rownames(expected) <- colnames(expected) <- c("gene1", "gene2")
+  mat <- matrix(c(
+    1, 0.8, 0.3,
+    0.8, 1, 0.5,
+    0.3, 0.5, 1
+  ), nrow = 3, ncol = 3)
 
-  expect_equal(result, expected)
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2", "gene3")
+  result <- transform_correlation_mat(mat, "allrank")
+
+  expected <- matrix(c(
+    1, 0.75, 0.25,
+    NA, 1, 0.5,
+    NA, NA, 1
+  ), nrow = 3, ncol = 3)
+
+  rownames(expected) <- colnames(expected) <- c("gene1", "gene2", "gene3")
+
+  expect_equal(result, expected, tolerance = 1e-6)
 
 })
 
@@ -516,13 +527,24 @@ test_that("transform_correlation_mat works correctly with allrank", {
 
 test_that("transform_correlation_mat works correctly with colrank", {
 
-  mat <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
-  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
-  result <- transform_correlation_mat(mat, "colrank")
-  expected <- matrix(c(1, 2, 2, 1), 2, 2)
-  rownames(expected) <- colnames(expected) <- c("gene1", "gene2")
+  mat <- matrix(c(
+    1, 0.8, -0.1,
+    0.8, 1, 0.5,
+    -0.1, 0.5, 1
+  ), nrow = 3, ncol = 3)
 
-  expect_equal(result, expected)
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2", "gene3")
+  result <- transform_correlation_mat(mat, "colrank")
+
+  expected <- matrix(c(
+    1, (2/3), (1/3),
+    (2/3), 1, (1/3),
+    (1/3), (2/3), 1
+  ), nrow = 3, ncol = 3)
+
+  rownames(expected) <- colnames(expected) <- c("gene1", "gene2", "gene3")
+
+  expect_equal(result, expected, tolerance = 1e-6)
 
 })
 
@@ -560,25 +582,45 @@ test_that("transform_correlation_mat fails with incorrect arguments", {
 
 test_that("transform_correlation_mat handles NA values correctly", {
 
-  mat <- matrix(c(1, NA, NA, 1), 2, 2)
+  mat <- matrix(c(
+    1, 0.8, NA,
+    0.8, 1, 0.5,
+    NA, 0.5, 1
+  ), nrow = 3, ncol = 3)
 
-  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2", "gene3")
 
   result_allrank <- transform_correlation_mat(mat, "allrank")
-  expected_allrank <- matrix(c(1, 3, NA, 1), 2, 2)
-  rownames(expected_allrank) <- colnames(expected_allrank) <- c("gene1", "gene2")
-
   result_colrank <- transform_correlation_mat(mat, "colrank")
-  expected_colrank <- matrix(c(1, 2, 2, 1), 2, 2)
-  rownames(expected_colrank) <- colnames(expected_colrank) <- c("gene1", "gene2")
-
   result_fz <- transform_correlation_mat(mat, "FZ")
-  expected_fz <- matrix(c(Inf, 0, 0, Inf), 2, 2)
-  rownames(expected_fz) <- colnames(expected_fz) <- c("gene1", "gene2")
 
-  expect_equal(result_allrank, expected_allrank)
-  expect_equal(result_colrank, expected_colrank)
-  expect_equal(result_fz, expected_fz)
+
+  expected_allrank <- matrix(c(
+    1, 0.75, 0.25,
+    NA, 1, 0.5,
+    NA, NA, 1
+  ), nrow = 3, ncol = 3)
+
+  expected_colrank <- matrix(c(
+    1, (2/3), (1/3),
+    (2/3), 1, (1/3),
+    (1/3), (2/3), 1
+  ), nrow = 3, ncol = 3)
+
+  expected_fz <- matrix(c(
+    Inf, 1.098612, 0,
+    1.098612, Inf, 0.5493061,
+    0, 0.5493061, Inf
+  ), nrow = 3, ncol = 3)
+
+
+  rownames(expected_allrank) <- colnames(expected_allrank) <- c("gene1", "gene2", "gene3")
+  rownames(expected_colrank) <- colnames(expected_colrank) <- c("gene1", "gene2", "gene3")
+  rownames(expected_fz) <- colnames(expected_fz) <- c("gene1", "gene2", "gene3")
+
+  expect_equal(result_allrank, expected_allrank, tolerance = 1e-6)
+  expect_equal(result_colrank, expected_colrank, tolerance = 1e-6)
+  expect_equal(result_fz, expected_fz, tolerance = 1e-6)
 
 })
 
