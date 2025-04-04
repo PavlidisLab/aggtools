@@ -632,12 +632,26 @@ test_that("transform_correlation_mat handles NA values correctly", {
 
 test_that("finalize_agg_mat works correctly with allrank", {
 
-  mat <- matrix(c(2, 6, NA, 2), 2, 2)
-  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
-  na_mat <- matrix(0, 2, 2)
-  result <- finalize_agg_mat(mat, agg_method = "allrank", 2, na_mat = na_mat)
-  expected <- matrix(c(1, 0.3333333, 0.3333333, 1), 2, 2)
-  rownames(expected) <- colnames(expected) <- c("gene1", "gene2")
+  mat <- matrix(c(
+    1, 0.75, 0.25,
+    NA, 1, 0.5,
+    NA, NA, 1
+  ), nrow = 3, ncol = 3) * 2 # as if summing 2 rank std. matrices
+
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2", "gene3")
+
+  na_mat <- matrix(0, nrow = 3, ncol = 3)
+  n_cts <- 2
+
+  result <- finalize_agg_mat(mat, agg_method = "allrank", n_celltypes =  n_cts, na_mat = na_mat)
+
+  expected <- matrix(c(
+    1, 0.75, 0.25,
+    0.75, 1, 0.5,
+    0.25, 0.5, 1
+  ), nrow = 3, ncol = 3)
+
+  rownames(expected) <- colnames(expected) <- c("gene1", "gene2", "gene3")
 
   expect_equal(result, expected, tolerance = 1e-6)
 
@@ -647,12 +661,26 @@ test_that("finalize_agg_mat works correctly with allrank", {
 
 test_that("finalize_agg_mat works correctly with colrank", {
 
-  mat <- matrix(c(2, 4, 4, 2), 2, 2)
-  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
-  na_mat <- matrix(0, 2, 2)
-  result <- finalize_agg_mat(mat, "colrank", 2, na_mat)
-  expected <- matrix(c(1, 0.5, 0.5, 1), 2, 2)
-  rownames(expected) <- colnames(expected) <- c("gene1", "gene2")
+  mat <- matrix(c(
+    1, (2/3), (1/3),
+    (2/3), 1, (1/3),
+    (1/3), (2/3), 1
+  ), nrow = 3, ncol = 3) * 2 # as if summing 2 rank std. matrices
+
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2", "gene3")
+
+  na_mat <- matrix(0, nrow = 3, ncol = 3)
+  n_cts <- 2
+
+  result <- finalize_agg_mat(mat, agg_method = "colrank", n_celltypes =  n_cts, na_mat = na_mat)
+
+  expected <- matrix(c(
+    1, (2/3), (1/3),
+    (2/3), 1, (1/3),
+    (1/3), (2/3), 1
+  ), nrow = 3, ncol = 3)
+
+  rownames(expected) <- colnames(expected) <- c("gene1", "gene2", "gene3")
 
   expect_equal(result, expected, tolerance = 1e-6)
 })
@@ -661,12 +689,48 @@ test_that("finalize_agg_mat works correctly with colrank", {
 
 test_that("finalize_agg_mat works correctly with FZ", {
 
-  mat <- matrix(c(Inf, 1.098612, 1.098612, Inf), 2, 2)
-  rownames(mat) <- colnames(mat) <- c("gene1", "gene2")
-  na_mat <- matrix(0, 2, 2)
-  result <- finalize_agg_mat(mat, "FZ", 2, na_mat)
-  expected <- matrix(c(Inf, 0.5493061, 0.5493061, Inf), 2, 2)
-  rownames(expected) <- colnames(expected) <- c("gene1", "gene2")
+  # Assume we have 3 cell types (n_cts = 3)
+  # and the following Fisher's Z transformed values for single measurements:
+  # fisherz(0.8) ~ 1.098612, fisherz(0.5) ~ 0.5493061, fisherz(0.6) ~ 0.693147.
+  #
+  # We simulate an aggregated matrix where:
+  # - gene1-gene2 was measured in 2 cell types (na_mat = 1)
+  #   => aggregated value = 2 * 1.098612 = 2.197224.
+  # - gene1-gene3 was measured in all 3 cell types (na_mat = 0)
+  #   => aggregated value = 3 * 0.5493061 = 1.6479183.
+  # - gene2-gene3 was measured in only 1 cell type (na_mat = 2)
+  #   => aggregated value = 1 * 0.693147 = 0.693147.
+  # For the diagonals (self correlations), Fisher's Z of 1 is Inf.
+
+  n_cts <- 3
+
+  mat <- matrix(c(
+    Inf,         2.197224,   1.6479183,
+    2.197224,    Inf,        0.693147,
+    1.6479183,   0.693147,   Inf
+  ), nrow = 3, ncol = 3)
+  rownames(mat) <- colnames(mat) <- c("gene1", "gene2", "gene3")
+
+  # NA matrix tracking missing measurements:
+  # - gene1-gene2: 1 missing (so measured count = 2)
+  # - gene1-gene3: 0 missing (measured count = 3)
+  # - gene2-gene3: 2 missing (measured count = 1)
+  na_mat <- matrix(c(
+    0, 1, 0,
+    1, 0, 2,
+    0, 2, 0
+  ), nrow = 3, byrow = TRUE)
+  rownames(na_mat) <- colnames(na_mat) <- c("gene1", "gene2", "gene3")
+
+  result <- finalize_agg_mat(mat, agg_method = "FZ", n_celltypes = n_cts, na_mat = na_mat)
+
+  # The expected output divides each element by the count of times it was msrd
+  expected <- matrix(c(
+    Inf, 2.197224 / (3 - 1), 1.6479183 / (3 - 0),
+    2.197224 / (3 - 1), Inf, 0.693147 / (3 - 2),
+    1.6479183 / (3 - 0), 0.693147 / (3 - 2), Inf
+  ), nrow = 3, ncol = 3)
+  rownames(expected) <- colnames(expected) <- c("gene1", "gene2", "gene3")
 
   expect_equal(result, expected, tolerance = 1e-6)
 })
