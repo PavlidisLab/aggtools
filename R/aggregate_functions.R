@@ -1,6 +1,6 @@
 #' Rank the columns of a matrix such that rank=1 is the highest positive value
 #'
-#' @param mat A numeric matrix
+#' @param mat A dense numeric matrix
 #' @param ties_arg A character indicating how ties are assigned, as fed into
 #' the ties argument of the base rank() function. "min" is the assumed default.
 #' @param na_arg A character indicating how NAs are handled, as fed into
@@ -9,7 +9,6 @@
 #' @return Return a matrix of integer ranks the same dimension as input matrix
 #' @export
 #'
-#' @examples
 colrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 
   rank_mat <- apply(-mat, 2, rank, ties.method = ties_arg, na.last = na_arg)
@@ -20,7 +19,7 @@ colrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 
 #' Rank the entire matrix jointly such that rank=1 is the highest positive value
 #'
-#' @param mat A numeric matrix
+#' @param mat A dense numeric matrix
 #' @param ties_arg A character indicating how ties are assigned, as fed into
 #' the ties argument of the base rank() function. "min" is the assumed default.
 #' @param na_arg A character indicating how NAs are handled, as fed into
@@ -29,7 +28,6 @@ colrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 #' @return Return a matrix of integer ranks the same dimension as input matrix
 #' @export
 #'
-#' @examples
 allrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 
   rank_mat <- rank(-mat, ties.method = ties_arg, na.last = na_arg)
@@ -43,13 +41,12 @@ allrank_mat <- function(mat, ties_arg = "min", na_arg = "keep") {
 
 #' Fisher Z transformation
 #'
-#' @param cor A numeric correlation value (single element, array, matrix)
+#' @param cor A numeric correlation value in [-1,1] (single element, array, matrix)
 #'
 #' @return The transformed correlations
 #' @seealso DescTools::FisherZ()
 #' @export
 #'
-#' @examples
 fisherz <- function(cor) {
 
   stopifnot(is.numeric(cor), all(cor >= -1 & cor <= 1))
@@ -72,7 +69,6 @@ fisherz <- function(cor) {
 #' columns of mat
 #' @export
 #'
-#' @examples
 sparse_pcor <- function(mat) {
 
   stopifnot(inherits(mat, "dgCMatrix"))
@@ -87,13 +83,13 @@ sparse_pcor <- function(mat) {
 
 #' Wrapper for calling sparse Pearson or Spearman correlation
 #'
+#' @import Matrix
 #' @param mat A sparse numeric m by n Matrix
 #' @param cor_method One of "pearson" or "spearman"
 #'
 #' @return A dense n by n matrix of the correlations between the columns of mat
 #' @export
 #'
-#' @examples
 calc_sparse_correlation <- function(mat, cor_method) {
 
   stopifnot(inherits(mat, "dgCMatrix"))
@@ -112,13 +108,12 @@ calc_sparse_correlation <- function(mat, cor_method) {
 
 #' Set NAs in matrix to 0
 #'
-#' @param mat A matrix
+#' @param mat A dense numeric matrix
 #'
 #' @return A matrix of the same dimensions where all values are preserved save
 #' for NAs assigned to 0
 #' @export
 #'
-#' @examples
 na_to_zero <- function(mat) {
 
   stopifnot(is.matrix(mat))
@@ -130,13 +125,12 @@ na_to_zero <- function(mat) {
 
 #' Set diag of a square matrix to 1
 #'
-#' @param mat A matrix
+#' @param mat A dense numeric matrix
 #'
 #' @return A matrix of the same dimensions where all values are preserved save
 #' for the diagonals assigned to 1
 #' @export
 #'
-#' @examples
 diag_to_one <- function(mat) {
 
   stopifnot(is.matrix(mat), ncol(mat) == nrow(mat))
@@ -148,13 +142,12 @@ diag_to_one <- function(mat) {
 
 #' Set upper triangle of a square matrix to NA
 #'
-#' @param mat A matrix
+#' @param mat A dense numeric matrix
 #'
 #' @return A matrix of the same dimensions where all values are preserved save
 #' for the values above the diagonal set to NA and the diagonal is preserved
 #' @export
 #'
-#' @examples
 uppertri_to_na <- function(mat) {
 
   stopifnot(is.matrix(mat), ncol(mat) == nrow(mat))
@@ -166,13 +159,12 @@ uppertri_to_na <- function(mat) {
 
 #' Replace the upper triangle of square matrix with its lower triangle
 #'
-#' @param mat A matrix
+#' @param mat A dense numeric matrix
 #'
 #' @return A matrix of the same dimensions where all upper triangular values are
 #' replaced by its lower triangle values
 #' @export
 #'
-#' @examples
 lowertri_to_symm <- function(mat) {
 
   stopifnot(is.matrix(mat), ncol(mat) == nrow(mat))
@@ -190,14 +182,13 @@ lowertri_to_symm <- function(mat) {
 #' n=20 default used from https://doi.org/10.1093/bioinformatics/btv118
 #'
 #' @import Matrix
-#' @param mat A sparse matrix
+#' @param mat A sparse cell by gene matrix
 #' @param min_cell A non-negative integer corresponding to how many cells of a
 #' cell type must have at least one count for a gene to be considered "measured"
 #'
 #' @return A matrix of the same dimensions where all sparse columns are set to 0
 #' @export
 #'
-#' @examples
 zero_sparse_cols <- function(mat, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
@@ -218,7 +209,8 @@ zero_sparse_cols <- function(mat, min_cell = 20) {
 #' Subset a sparse gene by cell count matrix to cells annotated to the input
 #' cell_type and genes contained in pc_df, transpose the resulting matrix to
 #' cells by genes, and set sparse genes/columns to 0
-
+#'
+#' @import Matrix
 #' @param mat A sparse gene by cell matrix
 #' @param meta A data frame that maps cell IDs to cell types
 #' @param pc_df A data frame of unique protein coding gene symbols
@@ -229,7 +221,6 @@ zero_sparse_cols <- function(mat, min_cell = 20) {
 #' @return A sparse cell by gene matrix
 #' @export
 #'
-#' @examples
 prepare_celltype_mat <- function(mat, meta, pc_df, cell_type, min_cell = 20) {
 
   stopifnot(inherits(mat, "dgCMatrix"),
@@ -270,7 +261,6 @@ prepare_celltype_mat <- function(mat, meta, pc_df, cell_type, min_cell = 20) {
 #' symbols in pc_df
 #' @export
 #'
-#' @examples
 init_agg_mat <- function(pc_df) {
 
   stopifnot("Symbol" %in% colnames(pc_df),
@@ -285,14 +275,13 @@ init_agg_mat <- function(pc_df) {
 
 #' Count the NAs in cmat and increment the corresponding indices of na_mat
 #'
-#' @param cmat A gene by gene correlation matrix
-#' @param na_mat A gene by gene matrix that tracks NA presence across multiple
-#' correlation matrices
+#' @param cmat A dense gene by gene correlation matrix
+#' @param na_mat A dense gene by gene matrix that tracks NA presence across
+#' multiple correlation matrices
 #'
 #' @return na_mat with the indices corresponding to NAs in cmat increased by 1
 #' @export
 #'
-#' @examples
 increment_na_mat <- function(cmat, na_mat) {
 
   na_ix <- which(is.na(cmat), arr.ind = TRUE)
@@ -323,7 +312,6 @@ increment_na_mat <- function(cmat, na_mat) {
 #' @return A dense gene by gene matrix of transformed correlations
 #' @export
 #'
-#' @examples
 transform_correlation_mat <- function(cmat, agg_method) {
 
   stopifnot(agg_method %in% c("allrank", "colrank", "FZ"),
@@ -379,17 +367,16 @@ transform_correlation_mat <- function(cmat, agg_method) {
 #' FZ: divide each element by its count of its measured (i.e., non-NA)
 #' observations
 #'
-#' @param amat A gene by gene matrix tracking the aggregate correlations
+#' @param amat A dense gene by gene matrix tracking the aggregate correlations
 #' @param agg_method One of "allrank", "colrank", or "FZ"
 #' @param n_celltypes The count of cell types that went into the aggregated
 #' correlation
-#' @param na_mat A gene by gene matrix tracking the count of NAs across the
-#' correlation matrices
+#' @param na_mat A dense gene by gene matrix tracking the count of NAs across
+#' the correlation matrices
 #'
-#' @return A gene by gene matrix of the formatted aggregated correlations
+#' @return A dense gene by gene matrix of the formatted aggregated correlations
 #' @export
 #'
-#' @examples
 finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 
   stopifnot(agg_method %in% c("allrank", "colrank", "FZ"),
@@ -446,6 +433,7 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 #' matrix, which are then summed and divided element-wise by the count of times
 #' a given gene-gene pair was co-measured across all cell types.
 #'
+#' @import Matrix
 #' @param mat A sparse gene by cell matrix
 #' @param meta A data frame that maps cell IDs to cell types
 #' @param pc_df A data frame of unique protein coding gene symbols
@@ -462,7 +450,6 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 #' matrix
 #' @export
 #'
-#' @examples
 aggr_coexpr_single_dataset <- function(mat,
                                        meta,
                                        pc_df,
@@ -536,7 +523,6 @@ aggr_coexpr_single_dataset <- function(mat,
 #' @return A list of the single cell count matrix and cell type metadata
 #' @export
 #'
-#' @examples
 load_scdat <- function(path) {
 
   stopifnot(is.character(path), length(path) == 1, file.exists(path))
@@ -588,7 +574,6 @@ load_scdat <- function(path) {
 #' matrix
 #' @export
 #'
-#' @examples
 aggr_coexpr_multi_dataset <- function(input_df,
                                       pc_df,
                                       cor_method,
