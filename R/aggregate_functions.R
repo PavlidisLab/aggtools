@@ -370,11 +370,11 @@ transform_correlation_mat <- function(cmat, agg_method) {
 #' Format the final summed aggregate correlations depending on the aggregate
 #' strategy.
 #'
-#' all_rank: jointly re-rank the summed ranks and standardize into \[0, 1\], then
-#' convert back to a symmetric matrix for ease of downstream operations
+#' all_rank: jointly re-rank the summed ranks and standardize back into
+#' \[0, 1\], then convert back to a symmetric matrix for downstream operations
 #'
 #' col_rank: re-rank the summed ranks for each column separately and standardize
-#' into \[0, 1\]
+#' back into \[0, 1\]
 #'
 #' FZ: divide each element by its count of its measured (i.e., non-NA)
 #' observations
@@ -397,16 +397,23 @@ finalize_agg_mat <- function(amat, agg_method, n_celltypes, na_mat) {
 
   if (agg_method == "allrank") {
 
-    # Rank standardizing: larger values more important then divide by max rank
+    # Multiply by -1 to ensure higher summed values (== more important) receive higher ranks
     amat <- allrank_mat(-amat, ties_arg = "min")
+
+    # Standardize to [0,1] by dividing by the max rank, ensuring max rank maps to 1
     amat <- amat / max(amat, na.rm = TRUE)
-    amat <- diag_to_one(amat)  # Make aggregate symmetric and self cor = 1
+
+    # Coerce diag/self cor to 1 and make aggregate matrix symmetric
+    amat <- diag_to_one(amat)
     amat <- lowertri_to_symm(amat)
 
   } else if (agg_method == "colrank") {
 
-    amat <- colrank_mat(-amat, ties_arg = "min")  # Larger values more important
-    amat <- apply(amat, 2, function(x) x / max(x)) # Rank std.
+    # Multiply by -1 to ensure higher summed values get higher ranks in each column
+    amat <- colrank_mat(-amat, ties_arg = "min")
+
+    # Standardize each column separately
+    amat <- apply(amat, 2, function(x) x / max(x))
 
   } else if (agg_method == "FZ") {
 
