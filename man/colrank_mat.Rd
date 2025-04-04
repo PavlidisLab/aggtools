@@ -7,7 +7,7 @@
 colrank_mat(mat, ties_arg = "min", na_arg = "keep")
 }
 \arguments{
-\item{mat}{A numeric matrix}
+\item{mat}{A dense numeric matrix}
 
 \item{ties_arg}{A character indicating how ties are assigned, as fed into
 the ties argument of the base rank() function. "min" is the assumed default.}

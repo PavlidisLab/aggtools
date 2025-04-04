@@ -7,7 +7,7 @@
 lowertri_to_symm(mat)
 }
 \arguments{
-\item{mat}{A matrix}
+\item{mat}{A dense numeric matrix}
 }
 \value{
 A matrix of the same dimensions where all upper triangular values are

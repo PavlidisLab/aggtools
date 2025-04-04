@@ -7,7 +7,7 @@
 zero_sparse_cols(mat, min_cell = 20)
 }
 \arguments{
-\item{mat}{A sparse matrix}
+\item{mat}{A sparse cell by gene matrix}
 
 \item{min_cell}{A non-negative integer corresponding to how many cells of a
 cell type must have at least one count for a gene to be considered "measured"}

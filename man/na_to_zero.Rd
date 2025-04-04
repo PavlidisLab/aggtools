@@ -7,7 +7,7 @@
 na_to_zero(mat)
 }
 \arguments{
-\item{mat}{A matrix}
+\item{mat}{A dense numeric matrix}
 }
 \value{
 A matrix of the same dimensions where all values are preserved save

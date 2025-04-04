@@ -7,12 +7,12 @@
 transform_correlation_mat(cmat, agg_method)
 }
 \arguments{
-\item{cmat}{A gene by gene correlation matrix}
+\item{cmat}{A dense gene by gene correlation matrix}
 
 \item{agg_method}{One of "allrank", "colrank", or "FZ"}
 }
 \value{
-A gene by gene matrix of transformed correlations
+A dense gene by gene matrix of transformed correlations
 }
 \description{
 Take an input correlation matrix and transform it to prepare for aggregation.
@@ -21,9 +21,11 @@ Each methods impute NA cors to 0 and ensure that the diagonal equals 1.
 }
 \details{
 allrank: make the matrix tri. to prevent double ranking symmetric elements
-and then jointly rank the matrix (lower rank = positive cor).
+and then jointly rank standardize the matrix into \link{0,1} such that higher pos.
+correlations are closer to 1.
 
-colrank: rank each column separately (lower rank = positive cor).
+colrank: rank standardize each column separately into \link{0,1} such that higher
+pos. correlations are closer to 1.
 
 FZ: perform Fisher's Z transform on the raw correlations
 }

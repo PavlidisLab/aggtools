@@ -7,10 +7,10 @@
 increment_na_mat(cmat, na_mat)
 }
 \arguments{
-\item{cmat}{A gene by gene correlation matrix}
+\item{cmat}{A dense gene by gene correlation matrix}
 
-\item{na_mat}{A gene by gene matrix that tracks NA presence across multiple
-correlation matrices}
+\item{na_mat}{A dense gene by gene matrix that tracks NA presence across
+multiple correlation matrices}
 }
 \value{
 na_mat with the indices corresponding to NAs in cmat increased by 1

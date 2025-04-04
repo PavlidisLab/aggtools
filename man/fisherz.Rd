@@ -7,7 +7,7 @@
 fisherz(cor)
 }
 \arguments{
-\item{cor}{A numeric correlation value (single element, array, matrix)}
+\item{cor}{A numeric correlation value in \link{-1,1} (single element, array, matrix)}
 }
 \value{
 The transformed correlations
