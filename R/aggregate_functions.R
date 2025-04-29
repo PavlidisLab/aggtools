@@ -241,7 +241,7 @@ prepare_celltype_mat <- function(mat, meta, pc_df, cell_type, min_cell = 20) {
   if (length(common_genes) == 0) stop("No common genes between pc_df and count matrix")
   if (length(diff_genes) > 0) stop("Not all genes in pc_df are found in count matrix")
 
-  ct_mat <- t(mat[pc_df$Symbol, ids])
+  ct_mat <- t(mat[pc_df$Symbol, ids, drop = FALSE])
   ct_mat <- zero_sparse_cols(ct_mat, min_cell)
 
   return(ct_mat)
